@@ -1,0 +1,11 @@
+.header-settings { max-width:1280px; }
+.header-settings .settings-fields { gap:18px 16px; }
+.header-settings .settings-fields > .wide { grid-column:1/-1; }
+.header-settings .admin-image-source { margin:0; }
+.header-settings .settings-field :is(input:not([type=file]),select) { min-height:44px; font-size:13px; }
+.header-logo-field { display:flex; align-items:center; gap:16px; grid-column:1/-1; padding:16px; border:1px dashed #3a526f; border-radius:12px; background:#0b1a2d; }
+.header-logo-field > img { width:74px; height:74px; border-radius:12px; background:white; object-fit:contain; padding:8px; flex:none; }
+.header-logo-field label { flex:1; min-width:0; }
+.header-logo-link { color:#83bbfc; font-size:11px; text-decoration:none; }
+.header-settings [hidden] { display:none; }
+@media(max-width:600px) { .header-logo-field { align-items:start; padding:12px; gap:10px; } .header-logo-field > img { width:50px; height:50px; } }

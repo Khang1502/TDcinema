@@ -1,9 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
+    @include('shared.notification-assets')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('shared.page-assets')
     <title>@yield('title', 'Admin Dashboard')</title>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="font-sans antialiased bg-slate-900 text-slate-50">
@@ -120,41 +123,12 @@
 
             <main class="flex-1 p-6 bg-[#0b1629]">
                 {{-- Flash messages (card style) --}}
-                @if (session('success'))
-                    <div class="mb-4 flex justify-start">
-                        <div class="w-full max-w-md rounded-2xl bg-[#0f172a] border border-emerald-500/40 shadow-lg shadow-emerald-900/30 overflow-hidden">
-                            <div class="flex items-center gap-3 px-4 py-3 border-b border-emerald-500/20 bg-emerald-500/10">
-                                <div class="h-10 w-10 rounded-full grid place-items-center bg-emerald-600/30 text-emerald-200 text-xl">😊</div>
-                                <div>
-                                    <div class="text-emerald-200 font-semibold">Yay!!</div>
-                                    <div class="text-slate-200 text-sm">{{ session('success') }}</div>
-                                </div>
-                            </div>
-                            <div class="px-4 py-3 text-right">
-                                <button onclick="this.closest('.rounded-2xl').remove()" class="text-emerald-300 text-sm font-semibold hover:text-emerald-200">OK, cool</button>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-                @if (session('error'))
-                    <div class="mb-4 flex justify-start">
-                        <div class="w-full max-w-md rounded-2xl bg-[#0f172a] border border-red-500/40 shadow-lg shadow-red-900/30 overflow-hidden">
-                            <div class="flex items-center gap-3 px-4 py-3 border-b border-red-500/20 bg-red-500/10">
-                                <div class="h-10 w-10 rounded-full grid place-items-center bg-red-600/30 text-red-200 text-xl">😞</div>
-                                <div>
-                                    <div class="text-red-200 font-semibold">Oh snap</div>
-                                    <div class="text-slate-200 text-sm">{{ session('error') }}</div>
-                                </div>
-                            </div>
-                            <div class="px-4 py-3 text-right">
-                                <button onclick="this.closest('.rounded-2xl').remove()" class="text-red-300 text-sm font-semibold hover:text-red-200">Try again</button>
-                            </div>
-                        </div>
-                    </div>
-                @endif
+                
+                
                 @yield('content')
             </main>
         </div>
     </div>
+@include('shared.notifications')
 </body>
 </html>

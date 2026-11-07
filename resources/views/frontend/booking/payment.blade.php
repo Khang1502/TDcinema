@@ -1,81 +1,45 @@
-﻿@php
+@php
     use Carbon\Carbon;
     $movie = $showtime->movie;
-    $poster = $movie->poster_path ?? '';
-    $posterUrl = preg_match('/^https?:\/\//', $poster) ? $poster : asset('storage/' . ltrim($poster, '/'));
+    $posterUrl = $movie->posterUrl();
     $ageBadge = strtoupper($movie->age_rating ?? 'T13');
-    $countdownSeconds = ($holdMinutes ?? 10) * 60;
     $grandTotal = $ticketTotal + $comboTotal;
 @endphp
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    @include('shared.notification-assets')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('shared.page-assets')
     <title>Thanh toán - {{ $movie->title }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <style>
-        :root { --p:#f26b38; --p-dark:#0b5394; --blue:#1c9bd4; --bg:#f5f7fb; --text:#0f172a; --muted:#6b7280; }
-        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
-        *{box-sizing:border-box;margin:0;padding:0;} body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--text);}
-        a{text-decoration:none;color:inherit;}
-        .topbar{background:#e8f6ff;border-bottom:1px solid #dbeafe;padding:10px 0;}
-        .topbar-inner{max-width:1240px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
-        .topbar-logo{display:flex;align-items:center;gap:10px;font-weight:800;color:#0b2c3d;}
-        .topbar-logo img{height:40px;width:auto;}
-        .topbar-cancel{color:#0b5394;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
-
-        .page{max-width:1240px;margin:0 auto;padding:18px 20px 40px;}
-        .progress{display:flex;justify-content:center;gap:8px;overflow:auto;padding:6px 0 16px;margin-bottom:12px;}
-        .step{display:flex;align-items:center;gap:6px;padding:8px 10px;border:none;font-weight:800;font-size:14px;color:#8c99a8;min-width:140px;white-space:nowrap;background:transparent;position:relative;}
-        .step::after{content:'';position:absolute;left:8px;right:8px;bottom:0;height:2px;background:#dfe3e8;border-radius:999px;}
-        .step.done{color:#0b5394;} .step.done::after{background:#0b5394;}
-        .step.active{color:#f26b38;} .step.active::after{background:#f26b38;}
-
-        .layout{display:grid;grid-template-columns:1.4fr 0.6fr;gap:18px;align-items:start;}
-        .card{background:#fff;border:1px solid #eef1f5;border-radius:12px;box-shadow:0 12px 26px rgba(0,0,0,.06);padding:18px;}
-        .section-title{font-weight:800;font-size:18px;margin-bottom:12px;}
-        .input-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
-        .input-row input{flex:1;min-width:220px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;}
-        .btn-apply{padding:12px 16px;background:var(--p);border:1px solid var(--p);color:#fff;font-weight:700;border-radius:8px;cursor:pointer;}
-        .hint{color:#6b7280;font-size:13px;margin-top:4px;}
-        .collapse{margin-top:10px;font-size:14px;color:#0b5394;cursor:pointer;}
-        .method-list{display:flex;flex-direction:column;gap:12px;}
-        .method{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid #eef1f5;border-radius:12px;background:#f8fafc;}
-        .method input{margin-top:4px;}
-        .method .label{font-weight:700;}
-        .timer{color:#e56b00;font-weight:800;font-size:15px;text-align:right;margin-bottom:8px;}
-
-        .summary-bar{height:6px;background:var(--p);margin:-18px -18px 14px -18px;border-radius:12px 12px 0 0;}
-        .summary-head{display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:flex-start;}
-        .summary-title{font-size:18px;font-weight:800;line-height:1.3;}
-        .summary-meta{font-size:14px;color:#475569;line-height:1.5;}
-        .badge{background:var(--p);color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;}
-        .divider{border-top:1px dashed #e5e7eb;margin:12px 0;}
-        .row{display:flex;justify-content:space-between;font-size:14px;color:#111827;margin-top:6px;}
-        .total{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:18px;margin-top:10px;}
-        .actions{display:flex;gap:12px;margin-top:14px;}
-        .btn-action{flex:1;padding:12px 18px;font-weight:700;border-radius:8px;border:1px solid #e5e7eb;cursor:pointer;text-align:center;}
-        .btn-action.primary{background:var(--p);color:#fff;border-color:var(--p);box-shadow:0 8px 18px rgba(242,107,56,.2);}
-        .btn-action.ghost{background:#fff;color:#0f172a;}
-        .btn-action:disabled{opacity:.6;cursor:not-allowed;}
-
-        /* Modal */
-        .overlay{position:fixed;inset:0;background:rgba(15,23,42,0.45);display:none;align-items:center;justify-content:center;z-index:999;}
-        .modal{background:#fff;border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,0.18);max-width:520px;width:90%;padding:20px;position:relative;}
-        .modal h3{font-size:18px;font-weight:800;text-align:center;margin-bottom:12px;color:#0f172a;}
-        .modal .row-line{display:flex;justify-content:space-between;margin:6px 0;font-size:14px;}
-        .modal .divider{margin:10px 0;border-top:1px dashed #e5e7eb;}
-        .modal-actions{display:flex;gap:10px;margin-top:12px;}
-        .close-modal{position:absolute;right:10px;top:8px;background:none;border:none;font-size:18px;cursor:pointer;color:#9ca3af;}
-        .agree{display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:13px;color:#374151;}
-    </style>
+        <link rel="stylesheet" href="{{ asset('assets/css/booking/payment.css') }}?v={{ filemtime(public_path('assets/css/booking/payment.css')) }}">
 </head>
-<body>
+<body data-hold-expires-at="{{ $holdExpiresAt ?? '' }}"
+      data-expired-url="{{ route('booking.checkout', $showtime) }}"
+      data-base-total="{{ $grandTotal }}"
+      data-promo-url="{{ route('booking.promo.apply') }}"
+      data-promo-remove-url="{{ route('booking.promo.remove') }}"
+      data-showtime-id="{{ $showtime->id }}"
+      data-momo-demo="{{ $momoDemo ? 'true' : 'false' }}"
+      data-member-discount="{{ $memberDiscount }}"
+      data-member-level="{{ $memberLevel?->name }}"
+      data-earn-unit="{{ $membershipSettings->earn_unit }}"
+      data-membership-enabled="{{ $membershipSettings->is_enabled ? 'true' : 'false' }}"
+      data-applied-code="{{ $appliedPromo?->code ?? '' }}"
+      data-promo-discount="{{ $promoDiscount }}"
+      data-currency-suffix=" đ"
+      data-msg-enter-code="Vui lòng nhập mã."
+      data-msg-apply-fail="Áp dụng mã thất bại."
+      data-msg-apply-success="Áp dụng mã thành công."
+      data-msg-apply-error="Có lỗi khi áp dụng mã."
+      data-msg-agree="Vui lòng đồng ý điều khoản."
+      data-msg-timeout="Hết thời gian">
     <div class="topbar">
         <div class="topbar-inner">
             <a href="{{ route('home') }}" class="topbar-logo">
-                <img src="{{ asset('assets/images/logo/logo.jpg') }}" alt="TD Cinema">
+                <img src="{{ asset('assets/images/logo/logo-transparent.png') }}" alt="TD Cinema">
                 <span>TD Cinema</span>
             </a>
             <a href="{{ route('home') }}" class="topbar-cancel">Hủy giao dịch ×</a>
@@ -83,11 +47,7 @@
     </div>
 
     <div class="page">
-        @if(session('error'))
-            <div style="margin-bottom:12px;padding:12px 14px;border:1px solid #fca5a5;background:#fef2f2;color:#b91c1c;border-radius:8px;font-weight:700;">
-                {{ session('error') }}
-            </div>
-        @endif
+        
         <div class="progress">
             <div class="step done">1. Chọn phim / Rạp / Suất</div>
             <div class="step done">2. Chọn ghế</div>
@@ -98,42 +58,67 @@
 
         <div class="layout">
             <div class="card">
-                <div class="section-title">Khuyến mãi</div>
-                <div class="input-row">
-                    <input type="text" id="promoCode" placeholder="Mã khuyến mãi">
-                    <button class="btn-apply" id="btnApply">Áp dụng</button>
-                </div>
-                <div class="hint">Lưu ý: Có thể áp dụng 1 vouchers vào 1 lần thanh toán.</div>
-                <div class="collapse">Khuyến mãi của bạn ▼</div>
-                @if(isset($availablePromos) && $availablePromos->count())
-                    <div id="promoList" style="margin:10px 0;display:grid;gap:8px;">
-                        @foreach($availablePromos as $promo)
-                            <div style="padding:10px;border:1px solid #e5e7eb;border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
-                                <div>
-                                    <div style="font-weight:700;">{{ $promo->name }} ({{ $promo->code }})</div>
-                                    <div style="color:#6b7280;font-size:13px;">HSD: {{ optional($promo->end_date)->format('d/m/Y') }}</div>
-                                    <div style="color:#6b7280;font-size:13px;">Loại: {{ $promo->type }} - Giá trị: {{ $promo->value }}</div>
-                                </div>
-                                <button type="button" class="btn-apply" style="padding:8px 12px;" data-code="{{ $promo->code }}">Dùng mã</button>
-                            </div>
-                        @endforeach
+                <section class="promotion-panel" aria-labelledby="promotionTitle">
+                    <div class="promotion-heading">
+                        <span class="promotion-icon" aria-hidden="true">%</span>
+                        <div><h2 id="promotionTitle">Chọn ưu đãi cho đơn của bạn</h2><p>Chạm “Áp dụng” để giảm tiền ngay. Mỗi đơn sử dụng một mã.</p></div>
                     </div>
-                @else
-                    <div class="hint">Không có khuyến mãi khả dụng.</div>
-                @endif
-                <div class="collapse">Áp dụng điểm Stars ▼</div>
+                    @if($memberDiscount > 0)<p class="membership-payment-note">Quyền lợi {{ $memberLevel->name }}: giảm {{ number_format($memberDiscount,0,',','.') }} đ tự động. Khi chọn mã khuyến mãi, mức giảm của mã sẽ thay thế ưu đãi theo hạng.</p>@endif
+                    <form id="promoForm" class="promo-code-form">
+                        <label for="promoCode">Bạn có mã khuyến mãi?</label>
+                        <div class="promo-input-group">
+                            <input type="text" id="promoCode" value="{{ $appliedPromo?->code ?? '' }}" placeholder="Nhập mã khuyến mãi" maxlength="50" autocomplete="off" spellcheck="false" aria-describedby="promoHint promoFeedback">
+                            <button type="submit" class="btn-apply" id="btnApply">Áp dụng</button>
+                        </div>
+                        <p id="promoHint" class="promo-note">Mỗi đơn thanh toán áp dụng một mã khuyến mãi.</p>
+                    </form>
+                    <p id="promoFeedback" class="promo-feedback" role="status" aria-live="polite" hidden></p>
+                    <div id="appliedVoucher" class="applied-voucher" @if(!$appliedPromo) hidden @endif>
+                        <span class="applied-voucher-check" aria-hidden="true">✓</span>
+                        <div><strong id="appliedPromoName">{{ $appliedPromo?->name }}</strong><span><b id="appliedPromoCode">{{ $appliedPromo?->code }}</b> · Giảm <b id="appliedPromoDiscount">{{ number_format($promoDiscount, 0, ',', '.') }} đ</b></span></div>
+                        <button type="button" id="removePromo" aria-label="Bỏ mã khuyến mãi đang áp dụng">Bỏ mã</button>
+                    </div>
+                    <details class="voucher-picker" open>
+                        <summary><span>Khuyến mãi khả dụng <b>{{ $availablePromos->count() }}</b></span><span class="voucher-chevron" aria-hidden="true"></span></summary>
+                        @if($availablePromos->count() > 3)<label class="voucher-search"><span>Tìm mã ưu đãi</span><input id="voucherSearch" type="search" placeholder="Nhập tên hoặc mã khuyến mãi"></label>@endif
+                        <div id="promoList" class="promo-list">
+                            @forelse(($availablePromos ?? collect()) as $promo)
+                                <div class="voucher-card" data-promo-search="{{ $promo->name }} {{ $promo->code }}">
+                                    <div class="voucher-value"><small>GIẢM</small><strong>{{ $promo->discount_label }}</strong></div>
+                                    <div class="voucher-info">@if($loop->first)<span class="voucher-best">Tiết kiệm nhất cho đơn này</span>@endif<h3>{{ $promo->name }}</h3><code>{{ $promo->code }}</code><p>Hạn dùng {{ $promo->end_date->format('d/m/Y') }}</p><p class="voucher-saving">Giảm {{ number_format($promo->discountFor($grandTotal), 0, ',', '.') }} đ cho đơn này</p></div>
+                                    <button type="button" class="voucher-use" data-code="{{ $promo->code }}">Áp dụng</button>
+                                </div>
+                            @empty
+                                <div class="voucher-empty"><span aria-hidden="true">%</span><div><strong>Chưa có ưu đãi khả dụng</strong><p>Nếu bạn có mã khuyến mãi, hãy nhập vào ô phía trên.</p></div></div>
+                            @endforelse
+                        </div>
+                        <p class="voucher-no-results" id="voucherNoResults" hidden>Không tìm thấy ưu đãi. Thử tên hoặc mã khác.</p>
+                    </details>
+                    <div class="stars-card">
+                        <span class="stars-icon" aria-hidden="true">★</span>
+                        <div><strong>Điểm thành viên Stars <b>{{ number_format(auth()->user()->points ?? 0, 0, ',', '.') }}</b></strong><p>Stars dùng để xét cấp bậc. Quyền lợi giảm giá theo hạng được áp dụng tự động khi không dùng mã.</p></div>
+                        <a href="{{ route('customer.membership') }}#member-benefits" target="_blank" rel="noopener">Xem quyền lợi <span aria-hidden="true">↗</span></a>
+                    </div>
+                </section>
 
-                <div class="divider" style="margin:16px 0;"></div>
-                <div class="section-title" style="margin-top:4px;">Phương thức thanh toán</div>
+                <div class="divider divider-lg"></div>
+                <div class="section-title section-title-tight">Phương thức thanh toán</div>
+                @if($momoDemo)
+                    <p class="payment-demo-note">MoMo đang ở chế độ mô phỏng cho đồ án. Không có tiền được trừ từ ví của bạn.</p>
+                @endif
                 <div class="method-list" id="methodList">
-                    @foreach($paymentMethods as $pm)
+                    @forelse($paymentMethods as $pm)
                         <label class="method">
-                            <input type="radio" name="payment_method" value="{{ $pm['key'] }}">
+                            <input type="radio" name="payment_method" value="{{ $pm['key'] }}" data-demo="{{ $pm['demo'] ? 'true' : 'false' }}">
                             <div>
-                                <div class="label">{{ $pm['label'] }}</div>
+                                <div class="label">{{ $pm['label'] }} @if($pm['badge'])<span class="method-highlight-badge">{{ $pm['badge'] }}</span>@endif @if($pm['demo'] ?? false)<span class="method-demo-badge">Mô phỏng</span>@endif</div>
+                                @if($pm['description'])<p class="method-description">{{ $pm['description'] }}</p>@endif
+                                @if($pm['instructions'])<p class="method-instructions">{{ $pm['instructions'] }}</p>@endif
                             </div>
                         </label>
-                    @endforeach
+                    @empty
+                        <p class="payment-methods-empty" role="status">Hiện chưa có phương thức thanh toán khả dụng. Vui lòng thử lại sau hoặc liên hệ rạp để được hỗ trợ.</p>
+                    @endforelse
                 </div>
             </div>
 
@@ -141,13 +126,13 @@
                 <div class="summary-bar"></div>
                 <div class="timer">Thời gian giữ ghế: <span id="countdown">--:--</span></div>
                 <div class="summary-head">
-                    <div><img src="{{ $posterUrl }}" alt="{{ $movie->title }}" style="width:90px;height:130px;object-fit:cover;border:1px solid #e5e7eb;"></div>
+                    <div><img src="{{ $posterUrl }}" alt="{{ $movie->title }}" class="summary-poster"></div>
                     <div>
                         <div class="summary-title">{{ $movie->title }}</div>
                         <div class="summary-meta">{{ $movie->format ?? '2D Phụ Đề' }} – <span class="badge">{{ $ageBadge }}</span></div>
                     </div>
                 </div>
-                <div class="summary-meta" style="margin-top:10px;font-weight:700;">{{ $showtime->room->cinema->name ?? '-' }} - {{ strtoupper($showtime->room->name ?? '-') }}</div>
+                <div class="summary-meta summary-meta-strong">{{ $showtime->room->cinema->name ?? '-' }} - {{ strtoupper($showtime->room->name ?? '-') }}</div>
                 <div class="summary-meta">Suất: <strong>{{ $startTime }}</strong> - {{ $startDate }}</div>
                 <div class="summary-meta">Ghế: {{ $selectedSeats->isNotEmpty() ? $selectedSeats->implode(', ') : 'Chưa chọn ghế' }}</div>
 
@@ -156,17 +141,19 @@
                 @if($comboTotal > 0)
                     <div class="row"><span>Combo</span><span id="comboTotal">{{ number_format($comboTotal, 0, ',', '.') }} đ</span></div>
                 @endif
-                <div class="row" id="promoRow" style="display:none;"><span>Giảm giá</span><span id="promoValue">-0 đ</span></div>
+                <div class="row promo-row" id="promoRow"><span><span id="summaryDiscountLabel">{{ $appliedPromo ? 'Khuyến mãi' : 'Ưu đãi thành viên' }}</span> <b id="summaryPromoCode"></b></span><span id="promoValue">-{{ number_format($promoDiscount, 0, ',', '.') }} đ</span></div>
+                @if($membershipSettings->is_enabled)<p class="membership-points-preview">Hoàn tất đơn này, bạn nhận <b id="pointsEstimate">{{ floor(max(0,$grandTotal - $promoDiscount) / max(1,$membershipSettings->earn_unit)) }}</b> Stars.</p>@endif
                 <div class="divider"></div>
-                <div class="total"><span>Tổng cộng</span><span id="grandTotal">{{ number_format($grandTotal, 0, ',', '.') }} đ</span></div>
+                <div class="total"><span>Tổng thanh toán</span><span id="grandTotal">{{ number_format(max(0, $grandTotal - $promoDiscount), 0, ',', '.') }} đ</span></div>
                 <form id="payForm" method="POST" action="{{ route('booking.payment.process', $showtime) }}">
                     @csrf
                     <input type="hidden" name="seats" id="paySeats" value="{{ $selectedSeats->implode(',') }}">
                     <input type="hidden" name="combo_total" id="payCombo" value="{{ $comboTotal }}">
-                    <input type="hidden" name="promo_code" id="payPromo" value="">
+                    <input type="hidden" name="promo_code" id="payPromo" value="{{ $appliedPromo?->code }}">
+                    <input type="hidden" name="payment_method" id="payMethod" value="">
                     <input type="hidden" name="total" id="payTotal" value="{{ $grandTotal }}">
                     <div class="actions">
-                        <a href="{{ route('booking.combo', $showtime) }}{{ $selectedSeats->isNotEmpty() ? '?seats='.urlencode($selectedSeats->implode(',')) : '' }}" class="btn-action ghost">Quay lại</a>
+                        <a href="{{ route('booking.combo', $showtime) }}" class="btn-action ghost">Quay lại</a>
                         <button type="button" class="btn-action primary" id="btnPay" disabled>Thanh toán</button>
                     </div>
                 </form>
@@ -185,9 +172,11 @@
             <div class="row-line"><span>Suất</span><span>{{ $startTime }} - {{ $startDate }}</span></div>
             <div class="row-line"><span>Ghế</span><span id="modalSeats">{{ $selectedSeats->implode(', ') ?: 'N/A' }}</span></div>
             <div class="divider"></div>
+            <div class="row-line" id="modalPromoRow" hidden><span><span id="modalDiscountLabel">Khuyến mãi</span> <b id="modalPromoCode"></b></span><strong id="modalPromoValue"></strong></div>
             <div class="row-line"><span>Tổng tạm tính</span><strong id="modalTotal">{{ number_format($grandTotal,0,',','.') }} đ</strong></div>
+            <p class="payment-demo-note" id="modalDemoNote" hidden>Đây là thanh toán mô phỏng cho đồ án. Không có tiền được trừ từ tài khoản của bạn.</p>
             <div class="agree">
-                <input type="checkbox" id="agreeConfirm" style="margin-top:3px;">
+                <input type="checkbox" id="agreeConfirm">
                 <label for="agreeConfirm">Tôi xác nhận thông tin đặt vé và đồng ý với điều khoản & chia sẻ thông tin.</label>
             </div>
             <div class="modal-actions">
@@ -197,106 +186,7 @@
         </div>
     </div>
 
-<script>
-    const countdownEl = document.getElementById('countdown');
-    const btnPay = document.getElementById('btnPay');
-    const btnConfirm = document.getElementById('confirmPay');
-    const overlay = document.getElementById('confirmOverlay');
-    const agreeConfirm = document.getElementById('agreeConfirm');
-    const modalSeatsDisplay = document.getElementById('modalSeats');
-    const paySeats = document.getElementById('paySeats');
-
-    let remaining = {{ $countdownSeconds }};
-    let baseTotal = {{ $grandTotal }};
-    let promoDiscount = 0;
-    const fmt = v => new Intl.NumberFormat('vi-VN').format(v) + ' đ';
-    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-    const tick = () => {
-        if (remaining < 0) {
-            btnPay.disabled = true;
-            btnPay.textContent = 'Hết thời gian';
-            return;
-        }
-        const m = String(Math.floor(remaining/60)).padStart(2,'0');
-        const s = String(remaining%60).padStart(2,'0');
-        countdownEl.textContent = `${m}:${s}`;
-        remaining--;
-    };
-    tick();
-    setInterval(tick, 1000);
-
-    document.querySelectorAll('input[name="payment_method"]').forEach(r=>{
-        r.addEventListener('change',()=>{ btnPay.disabled=false; });
-    });
-
-    const btnApply = document.getElementById('btnApply');
-    const promoCode = document.getElementById('promoCode');
-    const promoRow = document.getElementById('promoRow');
-    const promoValue = document.getElementById('promoValue');
-    const grandTotalEl = document.getElementById('grandTotal');
-
-    btnApply.addEventListener('click', async ()=>{
-        const code = (promoCode.value || '').trim();
-        if(!code){ alert('Vui lòng nhập mã.'); return; }
-        try {
-            const res = await fetch(@json(route('booking.promo.apply')), {
-                method: 'POST',
-                headers: {
-                    'Content-Type':'application/json',
-                    'X-CSRF-TOKEN': csrf,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ code, total: baseTotal })
-            });
-            const data = await res.json();
-            if(!data.success){
-                promoDiscount = 0;
-                promoRow.style.display='none';
-                alert(data.message || 'Áp dụng mã thất bại.');
-            }else{
-                promoDiscount = Number(data.discount || 0);
-                promoRow.style.display='flex';
-                promoValue.textContent = '-' + fmt(promoDiscount);
-                alert(data.message || 'Áp dụng mã thành công.');
-            }
-            grandTotalEl.textContent = fmt(baseTotal - promoDiscount);
-        } catch (e) {
-            promoDiscount = 0;
-            promoRow.style.display='none';
-            alert('Có lỗi khi áp dụng mã.');
-            grandTotalEl.textContent = fmt(baseTotal);
-        }
-    });
-
-    document.querySelectorAll('#promoList [data-code]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-            promoCode.value = btn.dataset.code || '';
-            btnApply.click();
-        });
-    });
-
-    const showModal = () => {
-        document.getElementById('modalTotal').textContent = fmt(baseTotal - promoDiscount);
-        modalSeatsDisplay.textContent = paySeats.value || 'N/A';
-        overlay.style.display = 'flex';
-    };
-    const hideModal = () => { overlay.style.display = 'none'; };
-    document.getElementById('closeModal').addEventListener('click', hideModal);
-    document.getElementById('cancelModal').addEventListener('click', hideModal);
-
-    btnPay.addEventListener('click', ()=>{ if(!btnPay.disabled) showModal(); });
-
-    btnConfirm.addEventListener('click', ()=>{
-        if(!agreeConfirm.checked){
-            alert('Vui lòng đồng ý điều khoản.');
-            return;
-        }
-        document.getElementById('payPromo').value = promoCode.value || '';
-        document.getElementById('payTotal').value = baseTotal - promoDiscount;
-        hideModal();
-        document.getElementById('payForm').submit();
-    });
-</script>
+    <script src="{{ asset('assets/js/booking/payment.js') }}?v={{ filemtime(public_path('assets/js/booking/payment.js')) }}" defer></script>
+@include('shared.notifications')
 </body>
 </html>

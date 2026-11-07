@@ -1,127 +1,44 @@
 @extends('admin.layouts.app')
-
-@section('title', 'Quản lý phim')
-
+@section('title','Quản lý phim')
+@push('styles')<link rel="stylesheet" href="{{ asset('assets/css/admin/movie-catalog.css') }}?v={{ filemtime(public_path('assets/css/admin/movie-catalog.css')) }}">@endpush
 @section('content')
-    <style>
-        .movies-shell { color: #dbeafe; font-family: 'Manrope', 'Inter', system-ui, sans-serif; }
-        .movies-card { background: #111a2f; border: 1px solid #1f2937; border-radius: 12px; }
-        .movies-table { table-layout: fixed; }
-        .movies-table th, .movies-table td { padding: 12px 10px; vertical-align: middle; }
-        .badge { border-radius: 9999px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
-        .movies-row { height: 96px; }
-        .poster-cell { display: flex; align-items: center; }
-        .input-lite { background: #0f172a; border: 1px solid #1f2937; border-radius: 10px; padding: 12px 14px; color: #e5e7eb; }
-        .input-lite:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
-        .btn-soft { background: #1f2937; border: 1px solid #1f2937; color: #e5e7eb; padding: 12px 14px; border-radius: 10px; min-width: 140px; text-align: center; }
-        .btn-soft:hover { background: #243049; }
-        .action-btn { padding: 6px 12px; border-radius: 10px; border: 1px solid #334155; color: #e5e7eb; font-size: 13px; }
-        .action-btn.edit { border-color: #60a5fa; color: #93c5fd; }
-        .action-btn.delete { border-color: #f87171; color: #fecdd3; }
-        .filter-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-        .filter-row .search { flex: 1; min-width: 260px; }
-        .filter-row .filters { display: flex; gap: 8px; margin-left: auto; }
-        .btn-add { width: fit-content; }
-    </style>
-
-    <div class="movies-shell max-w-7xl mx-auto px-4">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
-            <div class="flex-1">
-                <p class="text-sm text-slate-400">Thêm, sửa, và xóa phim từ cơ sở dữ liệu.</p>
-                <h1 class="text-2xl font-bold text-white mt-1">Quản lý Phim</h1>
-            </div>
-            <a href="{{ route('admin.movies.create') }}" class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 self-start md:self-end md:ml-auto btn-add">
-                + Thêm phim mới
-            </a>
+@php
+    $defaults=['q'=>'','status'=>'','genre'=>'','age'=>'','sort'=>'release_desc','view'=>'list','schedule'=>'','per_page'=>10];
+    $params=array_filter($filters,fn ($value,$key)=>$value !== $defaults[$key],ARRAY_FILTER_USE_BOTH);
+    $catalogUrl=fn ($changes=[])=>route('admin.movies.index',array_filter(array_replace($params,$changes),fn ($value)=>$value !== '' && $value !== null));
+    $statuses=['now_showing'=>'Đang chiếu','upcoming'=>'Sắp chiếu','inactive'=>'Đã lưu trữ'];
+    $showtimesAllowed=auth()->user()->hasAdminPermission('showtimes.manage');
+    $reportsAllowed=auth()->user()->hasAdminPermission('reports.view');
+@endphp
+<div class="mc-page">
+    <header class="mc-heading"><div><span class="mc-eyebrow">TD CINEMA · NỘI DUNG & LỊCH CHIẾU</span><h1>Danh mục phim</h1><p>Tìm phim, kiểm tra nội dung và quản lý lịch chiếu thuận tiện hơn.</p></div><div class="mc-actions"><a class="mc-button" href="{{ route('admin.genres.index') }}">@include('admin.partials.icon',['name'=>'tags','size'=>17]) Thể loại phim</a><a class="mc-button" href="{{ route('admin.movies.archive') }}">@include('admin.partials.icon',['name'=>'archive','size'=>17]) Kho lưu trữ</a><a class="mc-button primary" href="{{ route('admin.movies.create') }}">@include('admin.partials.icon',['name'=>'plus','size'=>18]) Thêm phim</a></div></header>
+    <nav class="mc-status-tabs" aria-label="Lọc phim theo trạng thái">
+        @foreach([''=>'Tất cả phim']+$statuses as $state=>$label)
+        <a class="mc-status-tab {{ $state ?: 'all' }} {{ $filters['status'] === $state ? 'is-selected' : '' }}" href="{{ $catalogUrl(['status'=>$state,'schedule'=>$state === 'now_showing' ? $filters['schedule'] : '']) }}" @if($filters['status'] === $state) aria-current="page" @endif><span>@include('admin.partials.icon',['name'=>[''=>'clapperboard','now_showing'=>'circle-play','upcoming'=>'calendar-clock','inactive'=>'archive'][$state],'size'=>20]) {{ $label }}</span><strong>{{ number_format($counts[$state ?: 'total']) }}</strong><small>Trong toàn danh mục</small></a>
+        @endforeach
+    </nav>
+    @if($counts['missing'] && $showtimesAllowed)<div class="mc-attention"><span>@include('admin.partials.icon',['name'=>'circle-alert','size'=>19]) <b>{{ $counts['missing'] }} phim đang chiếu</b> chưa có suất sắp tới.</span><a href="{{ route('admin.movies.index',['status'=>'now_showing','schedule'=>'missing','view'=>$filters['view']]) }}">Kiểm tra lịch chiếu @include('admin.partials.icon',['name'=>'arrow-right','size'=>16])</a></div>@endif
+    <section class="mc-catalog" aria-label="Danh sách phim">
+        <form class="mc-filter" method="GET" action="{{ route('admin.movies.index') }}">
+            @foreach(['status','view'] as $key)<input type="hidden" name="{{ $key }}" value="{{ $filters[$key] }}">@endforeach
+            <div class="mc-filter-main"><label class="mc-search"><span>Tìm phim</span><div>@include('admin.partials.icon',['name'=>'search','size'=>18])<input name="q" type="search" maxlength="150" value="{{ $filters['q'] }}" placeholder="Tên phim hoặc đạo diễn..."></div></label><label><span>Thể loại</span><select name="genre"><option value="">Tất cả thể loại</option>@foreach($genres as $genre)<option value="{{ $genre }}" @selected($filters['genre'] === $genre)>{{ $genre }}</option>@endforeach</select></label><label><span>Sắp xếp</span><select name="sort">@foreach(['release_desc'=>'Khởi chiếu mới nhất','release_asc'=>'Khởi chiếu cũ nhất','title'=>'Tên phim A–Z','shows'=>'Nhiều suất sắp tới nhất'] as $value=>$label)<option value="{{ $value }}" @selected($filters['sort'] === $value)>{{ $label }}</option>@endforeach</select></label><button class="mc-button primary" type="submit">@include('admin.partials.icon',['name'=>'list-filter','size'=>16]) Lọc</button></div>
+            <details class="mc-advanced" @if($filters['age'] || $filters['schedule'] || $filters['per_page'] !== 10) open @endif><summary>Thêm bộ lọc @include('admin.partials.icon',['name'=>'chevron-down','size'=>14])</summary><div><label><span>Phân loại tuổi</span><select name="age"><option value="">Tất cả độ tuổi</option>@foreach(['P','K','T13','T16','T18'] as $age)<option value="{{ $age }}" @selected($filters['age'] === $age)>{{ $age }}</option>@endforeach</select></label><label><span>Lịch chiếu (phim đang chiếu)</span><select name="schedule"><option value="">Tất cả lịch</option><option value="missing" @selected($filters['schedule'] === 'missing')>Chưa có suất sắp tới</option><option value="scheduled" @selected($filters['schedule'] === 'scheduled')>Đã có suất sắp tới</option></select></label><label><span>Phim mỗi trang</span><select name="per_page">@foreach([10,20,40] as $size)<option value="{{ $size }}" @selected($filters['per_page'] === $size)>{{ $size }} phim</option>@endforeach</select></label></div></details>
+        </form>
+        <div class="mc-results"><div><strong>{{ number_format($movies->total()) }} phim</strong><span>{{ $statuses[$filters['status']] ?? 'Tất cả trạng thái' }}</span></div><nav class="mc-view" aria-label="Cách xem danh sách">@foreach(['list'=>['rows-3','Danh sách'],'grid'=>['columns-3','Thẻ phim']] as $view=>[$icon,$label])<a href="{{ $catalogUrl(['view'=>$view,'page'=>request()->integer('page') > 1 ? request()->integer('page') : null]) }}" class="{{ $filters['view'] === $view ? 'is-selected' : '' }}" aria-label="{{ $label }}" title="{{ $label }}" @if($filters['view'] === $view) aria-current="page" @endif>@include('admin.partials.icon',['name'=>$icon,'size'=>18])<span>{{ $label }}</span></a>@endforeach</nav></div>
+        @if($filters['q'] || $filters['genre'] || $filters['age'] || $filters['schedule'])<div class="mc-chips">@foreach(['q'=>$filters['q'] ? 'Tìm: '.$filters['q'] : '', 'genre'=>$filters['genre'],'age'=>$filters['age'],'schedule'=>['missing'=>'Chưa có suất sắp tới','scheduled'=>'Đã có suất sắp tới'][$filters['schedule']] ?? ''] as $key=>$label)@if($label)<a href="{{ $catalogUrl([$key=>'']) }}" aria-label="Bỏ lọc {{ $label }}">{{ $label }} @include('admin.partials.icon',['name'=>'x','size'=>12])</a>@endif @endforeach<a class="mc-reset" href="{{ route('admin.movies.index',['view'=>$filters['view']]) }}">Xóa bộ lọc</a></div>@endif
+        <div class="mc-list {{ $filters['view'] === 'grid' ? 'mc-list--grid' : '' }}">
+            @forelse($movies as $movie)
+            @php $state=$movie->status; $next=$movie->next_showtime_at ? \Carbon\Carbon::parse($movie->next_showtime_at) : null; @endphp
+            <article class="mc-movie" data-movie-id="{{ $movie->id }}" data-movie-status="{{ $state }}">
+                <div class="mc-poster"><img src="{{ $movie->posterUrl() }}" alt="Poster {{ $movie->title }}" loading="lazy" width="72" height="108"></div>
+                <div class="mc-identity"><div class="mc-movie-badges"><span class="mc-state {{ $state }}">{{ $statuses[$state] ?? 'Chưa xác định' }}</span><span class="mc-age">{{ $movie->age_rating ?: 'Chưa phân loại' }}</span></div><h2>{{ $movie->title }}</h2><p>{{ $movie->genre ?: 'Chưa có thể loại' }}</p><div class="mc-facts"><span>{{ $movie->duration }} phút</span><span>Khởi chiếu {{ $movie->release_date?->format('d/m/Y') ?? 'chưa cập nhật' }}</span></div>@if($movie->director)<small>Đạo diễn: {{ $movie->director }}</small>@endif</div>
+                <div class="mc-sessions">@if($state === 'now_showing')<strong class="{{ !$movie->upcoming_showtimes_count ? 'is-missing' : '' }}">{{ number_format($movie->upcoming_showtimes_count) }}</strong><span>suất sắp tới</span>@if($next)<small>Gần nhất {{ $next->format('d/m · H:i') }}</small>@else<small class="is-missing">Chưa có lịch sắp tới</small>@endif @elseif($state === 'upcoming')<span class="mc-session-symbol">@include('admin.partials.icon',['name'=>'calendar-clock','size'=>23])</span><b>Chưa mở bán</b><small>Phim sắp chiếu</small>@else<strong>{{ number_format($movie->showtimes_count) }}</strong><span>suất trong lịch sử</span><small>Đã ngừng bán vé</small>@endif</div>
+                <div class="mc-movie-actions"><a class="mc-button edit" href="{{ route('admin.movies.edit',$movie) }}">@include('admin.partials.icon',['name'=>'pencil','size'=>16]) Chỉnh sửa</a><details class="mc-menu"><summary class="mc-button">Thao tác @include('admin.partials.icon',['name'=>'chevron-down','size'=>14])</summary><div>@if($showtimesAllowed && $state === 'now_showing')<a href="{{ route('admin.showtimes.create',['movie_id'=>$movie->id]) }}">@include('admin.partials.icon',['name'=>'plus','size'=>16]) Thêm suất chiếu</a><a href="{{ route('admin.showtimes.index',['movie_id'=>$movie->id,'date'=>$next?->toDateString() ?? now()->toDateString()]) }}">@include('admin.partials.icon',['name'=>'calendar-days','size'=>16]) Xem lịch chiếu</a>@endif @if($reportsAllowed)<a href="{{ route('admin.reports.index',['movie_id'=>$movie->id,'period'=>'all']) }}">@include('admin.partials.icon',['name'=>'chart-no-axes-combined','size'=>16]) Báo cáo doanh thu</a>@endif @if($state === 'inactive')<a href="{{ route('admin.movies.archive.show',$movie) }}">@include('admin.partials.icon',['name'=>'archive','size'=>16]) Xem lịch sử lưu trữ</a>@else<a href="{{ route('movies.show',$movie) }}" target="_blank" rel="noopener">@include('admin.partials.icon',['name'=>'external-link','size'=>16]) Xem trang khách</a><form method="POST" action="{{ route('admin.movies.archive.store',$movie) }}" data-confirm="Lưu trữ {{ $movie->title }} và ngừng bán vé? Suất chiếu, vé và doanh thu đã có sẽ được giữ lại.">@csrf<button type="submit">@include('admin.partials.icon',['name'=>'archive','size'=>16]) Lưu trữ phim</button></form>@endif</div></details></div>
+            </article>
+            @empty<div class="mc-empty">@include('admin.partials.icon',['name'=>'clapperboard','size'=>36])<h2>Không tìm thấy phim phù hợp</h2><p>Thử đổi từ khóa hoặc bộ lọc để xem các phim khác.</p><a class="mc-button" href="{{ route('admin.movies.index') }}">Xóa bộ lọc</a></div>@endforelse
         </div>
-
-        <div class="movies-card p-4 mb-4 flex flex-col gap-3">
-            <form method="GET" action="{{ route('admin.movies.index') }}" class="filter-row">
-                <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Tìm kiếm theo tên phim..." class="search input-lite">
-                <div class="filters">
-                    <select name="status" class="btn-soft">
-                        <option value="">Trạng thái</option>
-                        <option value="now_showing" {{ ($filters['status'] ?? '') === 'now_showing' ? 'selected' : '' }}>Đang chiếu</option>
-                        <option value="upcoming" {{ ($filters['status'] ?? '') === 'upcoming' ? 'selected' : '' }}>Sắp chiếu</option>
-                        <option value="inactive" {{ ($filters['status'] ?? '') === 'inactive' ? 'selected' : '' }}>Ngừng</option>
-                    </select>
-                    <button type="submit" class="btn-soft">Lọc</button>
-                    <a href="{{ route('admin.movies.index') }}" class="btn-soft">Reset</a>
-                </div>
-            </form>
-        </div>
-
-        <div class="movies-card overflow-hidden">
-            <table class="w-full movies-table text-sm text-slate-200">
-                <thead class="text-slate-400 uppercase text-xs">
-                    <tr class="bg-[#0f172a]">
-                        <th class="text-center w-24">Poster</th>
-                        <th class="text-center w-64">Tên phim</th>
-                        <th class="text-center w-40">Thể loại</th>
-                        <th class="text-center w-24">Thời lượng</th>
-                        <th class="text-center w-32">Ngày phát hành</th>
-                        <th class="text-center w-28">Số suất chiếu</th>
-                        <th class="text-center w-28">Trạng thái</th>
-                        <th class="text-center w-24">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($movies as $movie)
-                        @php
-                            $status = $movie->status ?? 'upcoming';
-                        @endphp
-                        <tr class="border-t border-slate-800 hover:bg-[#0f172a] transition movies-row align-middle">
-                            <td class="py-3 poster-cell justify-center text-center">
-                                @php
-                                    $poster = $movie->poster_path ? asset('storage/'.$movie->poster_path) : 'https://via.placeholder.com/60x80?text=Poster';
-                                @endphp
-                                <img src="{{ $poster }}" alt="{{ $movie->title }}" class="w-16 h-20 object-cover rounded-md border border-slate-700 mx-auto block">
-                            </td>
-                            <td class="font-semibold text-center align-middle">{{ $movie->title }}</td>
-                            <td class="text-slate-300 text-center align-middle">{{ $movie->genre }}</td>
-                            <td class="text-slate-300 text-center align-middle">{{ $movie->duration }} phút</td>
-                            <td class="text-slate-300 text-center align-middle">
-                                {{ $movie->release_date ? \Carbon\Carbon::parse($movie->release_date)->format('M d, Y') : '' }}
-                            </td>
-                            <td class="text-slate-300 text-center align-middle">{{ $movie->showtimes_count }}</td>
-                            <td class="whitespace-nowrap text-center align-middle">
-                                @php
-                                    $label = [
-                                        'now_showing' => 'Đang chiếu',
-                                        'upcoming' => 'Sắp chiếu',
-                                        'inactive' => 'Ngừng',
-                                    ][$status] ?? 'Sắp chiếu';
-                                    $class = match($status) {
-                                        'now_showing' => 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-                                        'inactive' => 'bg-slate-500/20 text-slate-300 border border-slate-500/30',
-                                        default => 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-                                    };
-                                @endphp
-                                <span class="badge {{ $class }}">{{ $label }}</span>
-                            </td>
-                            <td class="text-center space-x-2 align-middle">
-                                <a href="{{ route('admin.movies.edit', $movie) }}" class="action-btn edit">Sửa</a>
-                                <form action="{{ route('admin.movies.destroy', $movie) }}" method="POST" class="inline-block" onsubmit="return confirm('Xóa phim này?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="action-btn delete">Xóa</button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="text-center py-6 text-slate-400">Chưa có phim nào.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <div class="flex items-center justify-between text-sm text-slate-400 mt-4">
-            <div>Hiển thị {{ $movies->firstItem() ?? 0 }} - {{ $movies->lastItem() ?? 0 }} / {{ $movies->total() }} phim</div>
-            <div class="space-x-2">
-                {{ $movies->links() }}
-            </div>
-        </div>
-    </div>
+        @if($movies->hasPages())<div class="mc-pagination"><span>Hiển thị {{ $movies->firstItem() }}–{{ $movies->lastItem() }} / {{ $movies->total() }} phim</span>{{ $movies->onEachSide(1)->links() }}</div>@endif
+    </section>
+</div>
 @endsection
+@push('scripts')<script src="{{ asset('assets/js/admin/movie-catalog.js') }}?v={{ filemtime(public_path('assets/js/admin/movie-catalog.js')) }}" defer></script>@endpush

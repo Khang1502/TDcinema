@@ -1,19 +1,16 @@
-@extends('admin.layouts.app')
+﻿@extends('admin.layouts.app')
 
 @section('title', 'Quản lý rạp phim')
 
-@section('content')
-    <style>
-        .page-shell { color: #e5e7eb; font-family: 'Manrope','Inter',system-ui,sans-serif; }
-        .card { background: #0f172a; border: 1px solid #1f2937; border-radius: 16px; padding: 18px; }
-        .label { color: #cbd5e1; font-size: 13px; margin-bottom: 6px; display: block; font-weight: 600; }
-        .input { width: 100%; background: #0b1224; border: 1px solid #1f2937; border-radius: 10px; padding: 12px 14px; color: #e5e7eb; }
-        .input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
-        .btn-primary { background: #2563eb; color: #fff; padding: 10px 16px; border-radius: 10px; font-weight: 700; }
-        .btn-primary:hover { background: #1d4ed8; }
-        .btn-ghost { color: #cbd5e1; }
-    </style>
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/admin/cinemas.css') }}?v={{ filemtime(public_path('assets/css/admin/cinemas.css')) }}">
+@endpush
 
+@push('scripts')
+    <script src="{{ asset('assets/js/admin/cinemas.js') }}?v={{ filemtime(public_path('assets/js/admin/cinemas.js')) }}" defer></script>
+@endpush
+
+@section('content')
     <div class="page-shell max-w-4xl mx-auto">
         <div class="flex items-center justify-between mb-5">
             <div>
@@ -23,7 +20,7 @@
         </div>
 
         @if ($errors->any())
-            <div class="mb-4 bg-red-500/10 border border-red-400/60 text-red-200 rounded-lg p-3 font-semibold">
+            <div data-inline-notification class="mb-4 bg-red-500/10 border border-red-400/60 text-red-200 rounded-lg p-3 font-semibold">
                 <ul class="list-disc list-inside">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -33,7 +30,7 @@
         @endif
 
         <div class="card">
-            <form action="{{ route('admin.cinemas.update', $cinema) }}" method="POST" class="space-y-5">
+            <form action="{{ route('admin.cinemas.update', $cinema) }}" method="POST" enctype="multipart/form-data" class="space-y-5">
                 @csrf
                 @method('PUT')
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -41,10 +38,7 @@
                         <label class="label">Tên rạp *</label>
                         <input name="name" value="{{ old('name', $cinema->name) }}" class="input" required>
                     </div>
-                    <div>
-                        <label class="label">Tỉnh/Thành phố</label>
-                        <input name="city" value="{{ old('city', $cinema->city) }}" class="input">
-                    </div>
+                    @include('admin.cinemas._location-fields')
                     <div class="md:col-span-2">
                         <label class="label">Địa chỉ</label>
                         <input name="address" value="{{ old('address', $cinema->address) }}" class="input">
@@ -58,6 +52,8 @@
                         </select>
                     </div>
                 </div>
+
+                @include('admin.cinemas._image-field')
 
                 <div class="flex items-center gap-3">
                     <button class="btn-primary" type="submit">Lưu thay đổi</button>
@@ -111,13 +107,15 @@
                                     @endphp
                                     <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $rStatus }}">{{ $rLabel }}</span>
                                 </td>
-                                <td class="py-2 text-center space-x-3">
-                                    <a href="{{ route('admin.cinemas.edit', [$cinema, 'edit_room' => $room->id]) }}" class="text-blue-300 hover:text-blue-200 text-sm">Sửa</a>
-                                    <form action="{{ route('admin.cinemas.rooms.destroy', [$cinema, $room]) }}" method="POST" class="inline-block" onsubmit="return confirm('Xóa phòng này?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="text-red-300 hover:text-red-200 text-sm">Xóa</button>
-                                    </form>
+                                <td class="py-2 text-center admin-actions-cell">
+                                    <div class="admin-actions">
+                                        <a href="{{ route('admin.cinemas.edit', [$cinema, 'edit_room' => $room->id]) }}" class="admin-action admin-action--edit">Sửa</a>
+                                        <form action="{{ route('admin.cinemas.rooms.destroy', [$cinema, $room]) }}" method="POST" data-confirm="Xóa phòng này?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="admin-action admin-action--danger">Xóa</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -135,7 +133,7 @@
                     @csrf
                     <div class="md:col-span-2">
                         <label class="label">Tên phòng *</label>
-                        <input name="name" class="input" required placeholder="Phòng 1, Phòng IMAX...">
+                        <input name="name" class="input" required placeholder="Rạp 1, Rạp 2, Rạp 3...">
                     </div>
                     <div>
                         <label class="label">Loại phòng</label>

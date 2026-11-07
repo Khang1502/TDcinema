@@ -1,23 +1,22 @@
-@extends('admin.layouts.app')
+﻿@extends('admin.layouts.app')
 @section('title', 'Chi tiết người dùng')
+
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/admin/users.css') }}">
+@endpush
+
+@push('scripts')
+    <script src="{{ asset('assets/js/admin/users.js') }}?v={{ filemtime(public_path('assets/js/admin/users.js')) }}" defer></script>
+@endpush
 @php use Illuminate\Support\Str; @endphp
 @section('content')
-<style>
-    .users-shell { color: #e2e8f0; font-family: 'Manrope','Inter',system-ui,sans-serif; }
-    .users-card { background: #0e1627; border: 1px solid #1f2937; border-radius: 14px; }
-    .detail-row { display: grid; grid-template-columns: 180px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid #1f2937; }
-    .detail-row:last-child { border-bottom: none; }
-    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-    .status-active { background: #0b3c2d; color: #22c55e; border: 1px solid #0f6142; }
-    .status-blocked { background: #3b0d0d; color: #f87171; border: 1px solid #b91c1c; }
-</style>
 <div class="users-shell max-w-4xl mx-auto px-4 space-y-4">
     <div class="flex items-center justify-between">
         <div>
             <p class="text-sm text-slate-400">Thông tin chi tiết tài khoản.</p>
             <h1 class="text-2xl font-bold text-white mt-1">{{ $user->name }}</h1>
         </div>
-        <a href="{{ route('admin.users.index') }}" class="text-sm text-blue-300 hover:text-blue-200">← Quay lại danh sách</a>
+        <a href="{{ route('admin.users.index') }}" class="text-sm text-blue-300 hover:text-blue-200">@include('admin.partials.icon',['name'=>'arrow-left','size'=>16]) Quay lại danh sách</a>
     </div>
 
     <div class="users-card p-5 space-y-4">
@@ -62,3 +61,4 @@
     </div>
 </div>
 @endsection
+

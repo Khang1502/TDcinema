@@ -1,0 +1,21 @@
+#authOverlay{position:fixed;inset:0;background:#08213b99;display:none;align-items:center;justify-content:center;z-index:200;padding:16px;font-family:'Be Vietnam Pro',sans-serif;}
+#authOverlay.active{display:flex;}
+#authOverlay .modal-box{position:relative;width:440px;max-width:100%;max-height:calc(100dvh - 32px);overflow:auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px #09284740;padding:28px;color:#153b59;}
+#authOverlay .modal-header{text-align:center;margin-bottom:20px;}
+#authOverlay .modal-title{font-size:22px;font-weight:800;margin-bottom:7px;}
+#authOverlay .modal-sub{color:#8292a4;font-size:12px;line-height:1.8;}
+#authOverlay .auth-form{display:flex;flex-direction:column;gap:14px;margin-top:14px;}
+#authOverlay .auth-form label{display:block;font-size:12px;font-weight:700;margin-bottom:6px;}
+#authOverlay .auth-form input{width:100%;padding:12px;border:1px solid #dfe7f0;border-radius:9px;font:12px 'Be Vietnam Pro',sans-serif;color:#25455f;}
+#authOverlay .auth-form input:focus{outline:2px solid #81b5df;outline-offset:1px;}
+#authOverlay .auth-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;flex-wrap:wrap;}
+#authOverlay .auth-link{color:#146eb5;font-weight:700;cursor:pointer;}
+#authOverlay .auth-submit{width:100%;display:block;text-align:center;background:#0667b7;color:#fff;border:0;border-radius:9px;padding:13px;font-size:12px;font-weight:800;cursor:pointer;text-decoration:none;}
+#authOverlay .auth-alert{background:#fff1f0;border:1px solid #f1ccc5;color:#b95947;padding:12px;border-radius:9px;font-size:12px;margin-bottom:12px;}
+#authOverlay .modal-close{position:absolute;top:10px;right:13px;width:28px;height:28px;border:0;background:transparent;font-size:23px;color:#8b9aad;cursor:pointer;}
+#authOverlay .auth-hint,#authOverlay .auth-error{font-size:11px;line-height:1.7;color:#8695a5;}
+#authOverlay .auth-error{color:#c45942;}
+#authOverlay .auth-success{text-align:center;}
+#authOverlay .auth-success img{height:100px;margin:0 auto 12px;object-fit:contain;}
+#authOverlay .auth-success .msg{font-size:12px;line-height:1.8;margin-bottom:16px;}
+#authOverlay .hidden{display:none!important;}

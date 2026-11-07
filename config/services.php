@@ -35,8 +35,9 @@ return [
         ],
     ],
 
-    // Cấu hình MoMo (sandbox)
+    // demo chỉ dùng trên local/testing; gateway kết nối tài khoản Merchant.
     'momo' => [
+        'mode'         => env('MOMO_MODE', 'gateway'),
         'endpoint'     => env('MOMO_ENDPOINT', 'https://test-payment.momo.vn/v2/gateway/api/create'),
         'partner_code' => env('MOMO_PARTNER_CODE', ''),
         'access_key'   => env('MOMO_ACCESS_KEY', ''),

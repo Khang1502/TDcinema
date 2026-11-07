@@ -1,0 +1,146 @@
+
+:root { --p:#f26b38; --p-dark:#0b5394; --blue:#1c9bd4; --bg:#f5f7fb; --text:#0f172a; --muted:#6b7280; }
+        *{box-sizing:border-box;margin:0;padding:0;} body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--text);}
+        a{text-decoration:none;color:inherit;}
+        .topbar{background:#e8f6ff;border-bottom:1px solid #dbeafe;padding:10px 0;}
+        .topbar-inner{max-width:1240px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+        .topbar-logo{display:flex;align-items:center;gap:10px;font-weight:800;color:#0b2c3d;}
+        .topbar-logo img{height:40px;width:40px;object-fit:contain;transform:scale(1.45);}
+        .topbar-cancel{color:#0b5394;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+
+        .page{max-width:1240px;margin:0 auto;padding:18px 20px 40px;}
+        .progress{display:flex;justify-content:center;gap:8px;overflow:auto;padding:6px 0 16px;margin-bottom:12px;}
+        .step{display:flex;align-items:center;gap:6px;padding:8px 10px;border:none;font-weight:800;font-size:14px;color:#8c99a8;min-width:140px;white-space:nowrap;background:transparent;position:relative;}
+        .step::after{content:'';position:absolute;left:8px;right:8px;bottom:0;height:2px;background:#dfe3e8;border-radius:999px;}
+        .step.done{color:#0b5394;} .step.done::after{background:#0b5394;}
+        .step.active{color:#f26b38;} .step.active::after{background:#f26b38;}
+
+        .layout{display:grid;grid-template-columns:1.4fr 0.6fr;gap:18px;align-items:start;}
+        .card{background:#fff;border:1px solid #eef1f5;border-radius:12px;box-shadow:0 12px 26px rgba(0,0,0,.06);padding:18px;}
+        .section-title{font-weight:800;font-size:18px;margin-bottom:12px;}
+        .section-title-tight{margin-top:4px;}
+        .input-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+        .input-row input{flex:1;min-width:220px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;}
+        .btn-apply{padding:12px 16px;background:var(--p);border:1px solid var(--p);color:#fff;font-weight:700;border-radius:8px;cursor:pointer;}
+        .btn-apply-sm{padding:8px 12px;font-size:13px;}
+        .hint{color:#6b7280;font-size:13px;margin-top:4px;}
+        .collapse{margin-top:10px;font-size:14px;color:#0b5394;cursor:pointer;}
+        .alert{margin-bottom:12px;padding:12px 14px;border-radius:8px;font-weight:700;}
+        .alert-error{border:1px solid #fca5a5;background:#fef2f2;color:#b91c1c;}
+        .payment-demo-note{margin:12px 0;padding:12px 14px;border:1px solid #cde2f6;border-radius:10px;background:#f0f7ff;color:#315d83;font-size:12px;line-height:1.65;}
+        .payment-demo-note[hidden]{display:none!important;}
+        .method-demo-badge{display:inline-block;margin-left:6px;padding:3px 7px;border-radius:5px;background:#edf5ff;color:#0865b1;font-size:10px;vertical-align:middle;}
+        .membership-payment-note{font-size:11px;color:#347658;line-height:1.8;padding:13px 15px;background:#f0faf5;border:1px solid #cce9db;border-radius:10px;margin:0 0 18px;}
+        .membership-points-preview{font-size:11px;color:#967027;line-height:1.8;padding:10px 12px;border-radius:8px;background:#fff8e7;margin:16px 0;}
+        .promo-list{margin:10px 0;display:grid;gap:8px;}
+        .promo-item{padding:10px;border:1px solid #e5e7eb;border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+        .promo-title{font-weight:700;}
+        .promo-meta{color:var(--muted);font-size:13px;}
+
+        .promotion-panel{color:#102a43;}
+        .voucher-search{display:block;margin:0 0 14px;font-size:11px;color:#708197}.voucher-search span{display:block;margin-bottom:6px}.voucher-search input{width:100%;min-width:0;border:1px solid #dce6f1;border-radius:9px;padding:11px 12px;background:#f8fbff;color:#18334f;font:12px 'Be Vietnam Pro',sans-serif}.voucher-search input:focus{outline:2px solid #94bce3;outline-offset:1px}.voucher-best{display:inline-block;margin-bottom:7px;padding:4px 7px;border-radius:5px;background:#fff1d9;color:#92651d;font-size:9px;font-weight:700}.voucher-info .voucher-saving{color:#168152;font-size:11px;font-weight:700}.voucher-no-results{padding:20px 12px;text-align:center;color:#74899e;font-size:12px}.voucher-card[hidden],.voucher-no-results[hidden],#modalPromoRow[hidden]{display:none!important}.promo-row{color:#168152}.promo-row b{font-size:11px}
+        .promotion-heading{display:flex;align-items:center;gap:13px;margin-bottom:22px;}
+        .promotion-icon{display:grid;place-items:center;flex:0 0 46px;height:46px;border-radius:13px;background:#fff0e9;color:#f06436;font-size:24px;font-weight:800;}
+        .promotion-heading h2{margin:0 0 5px;font-size:20px;line-height:1.3;font-weight:800;}
+        .promotion-heading p{color:#708197;font-size:12px;line-height:1.6;}
+        .promo-code-form label{display:block;margin-bottom:9px;color:#40566e;font-size:13px;font-weight:700;}
+        .promo-input-group{display:flex;align-items:stretch;gap:6px;padding:5px;border:1px solid #d8e2ee;border-radius:12px;background:#f9fbfe;transition:border-color .18s,box-shadow .18s;}
+        .promo-input-group:focus-within{border-color:#6da7df;box-shadow:0 0 0 3px #e9f3ff;background:#fff;}
+        .promo-input-group input{min-width:0;flex:1;width:100%;padding:10px 12px;border:0;outline:0;background:transparent;color:#18334f;font:600 14px 'Be Vietnam Pro',sans-serif;text-transform:uppercase;}
+        .promo-input-group input::placeholder{text-transform:none;font-weight:400;color:#8b9aaf;}
+        .promo-input-group .btn-apply{flex:0 0 auto;border-radius:8px;padding:11px 18px;font:700 13px 'Be Vietnam Pro',sans-serif;background:#f06436;border-color:#f06436;}
+        .promo-input-group .btn-apply:hover:not(:disabled){background:#e45227;border-color:#e45227;}
+        .promotion-panel button:disabled{opacity:.55;cursor:not-allowed;}
+        .promotion-panel :is(button,a,summary):focus-visible{outline:3px solid #8bbceb;outline-offset:3px;}
+        .promo-note{margin:9px 0 0;color:#7c8ba0;font-size:11px;line-height:1.6;}
+        .promo-feedback{margin-top:12px;padding:10px 12px;border-radius:8px;background:#fff3f1;color:#b43b2b;font-size:12px;line-height:1.6;}
+        .promo-feedback.is-success{background:#effaf5;color:#177448;}
+        .promo-feedback[hidden],.applied-voucher[hidden]{display:none!important;}
+        .applied-voucher{display:flex;align-items:center;gap:11px;margin-top:14px;padding:13px;border:1px solid #a9ddc4;border-radius:11px;background:#f0faf5;}
+        .applied-voucher-check{flex:0 0 27px;height:27px;display:grid;place-items:center;border-radius:50%;background:#d5f0e2;color:#168352;font-weight:800;}
+        .applied-voucher>div{flex:1;min-width:0;}
+        .applied-voucher strong{display:block;color:#16754b;font-size:13px;overflow-wrap:anywhere;}
+        .applied-voucher div span{display:block;margin-top:5px;color:#43846a;font-size:11px;overflow-wrap:anywhere;}
+        .applied-voucher button{flex:0 0 auto;padding:7px 9px;border:1px solid #acd5be;border-radius:7px;background:#fff;color:#20744d;font:700 11px 'Be Vietnam Pro',sans-serif;cursor:pointer;}
+        .voucher-picker{margin-top:22px;border-top:1px solid #e7edf4;}
+        .voucher-picker summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 0 12px;list-style:none;cursor:pointer;font-size:14px;font-weight:700;}
+        .voucher-picker summary::-webkit-details-marker{display:none;}
+        .voucher-picker summary b{display:inline-grid;place-items:center;min-width:22px;height:22px;margin-left:7px;padding:0 6px;border-radius:6px;background:#edf4fd;color:#2465a4;font-size:11px;}
+        .voucher-chevron{width:7px;height:7px;margin-right:5px;border-right:2px solid #71869c;border-bottom:2px solid #71869c;transform:rotate(45deg);}
+        .voucher-picker[open] .voucher-chevron{transform:rotate(225deg);}
+        .promotion-panel .promo-list{display:grid;gap:10px;margin:0;max-height:360px;overflow:auto;padding:3px;scrollbar-width:thin;}
+        .voucher-card{display:grid;grid-template-columns:100px minmax(0,1fr) auto;align-items:center;gap:13px;padding:12px;border:1px solid #dde7f2;border-radius:11px;background:#fff;transition:border-color .18s,background .18s;}
+        .voucher-card.is-applied{border-color:#9acfb3;background:#f3fbf7;}
+        .voucher-value{display:grid;align-content:center;gap:4px;min-height:72px;padding-right:13px;border-right:1px dashed #cddbed;color:#e15a32;text-align:center;}
+        .voucher-value small{font-size:9px;font-weight:800;letter-spacing:.13em;}
+        .voucher-value strong{font-size:17px;font-weight:800;overflow-wrap:anywhere;}
+        .voucher-info{min-width:0;}
+        .voucher-info h3{font-size:12px;line-height:1.5;overflow-wrap:anywhere;}
+        .voucher-info code{display:inline-block;margin-top:5px;padding:3px 6px;border-radius:4px;background:#f1f5fa;color:#3c6083;font-size:10px;font-weight:700;overflow-wrap:anywhere;}
+        .voucher-info p{margin-top:6px;color:#8a99ad;font-size:10px;}
+        .voucher-use{padding:8px 10px;border:1px solid #bcd5ee;border-radius:7px;background:#f1f7ff;color:#07569c;font:700 11px 'Be Vietnam Pro',sans-serif;white-space:nowrap;cursor:pointer;}
+        .voucher-use:hover:not(:disabled){border-color:#5f9ed6;background:#e7f2ff;}
+        .voucher-empty{display:flex;align-items:center;gap:12px;padding:18px 15px;border:1px dashed #d6e1ec;border-radius:11px;background:#f9fbfd;}
+        .voucher-empty>span{display:grid;place-items:center;flex:0 0 36px;height:36px;border-radius:10px;background:#edf2f8;color:#a0afc0;font-size:20px;font-weight:700;}
+        .voucher-empty strong{font-size:12px;color:#5e748d;}
+        .voucher-empty p{margin-top:5px;color:#8a99ad;font-size:11px;line-height:1.6;}
+        .stars-card{display:flex;align-items:center;gap:12px;margin-top:18px;padding:14px;border:1px solid #eedfbd;border-radius:11px;background:#fffdf7;}
+        .stars-icon{flex:0 0 29px;color:#df9b25;font-size:26px;}
+        .stars-card>div{flex:1;min-width:0;}
+        .stars-card strong{display:block;color:#765322;font-size:12px;}
+        .stars-card strong b{display:inline-block;margin-left:5px;padding:3px 7px;border-radius:6px;background:#fff0cf;color:#956722;}
+        .stars-card p{margin-top:5px;color:#a38b65;font-size:10px;line-height:1.5;}
+        .stars-card a{flex:0 0 auto;font-size:10px;font-weight:700;color:#956722;}
+        @media(max-width:600px){.promotion-heading h2{font-size:18px;}.promo-input-group input{font-size:12px;padding:10px 6px;}.promo-input-group .btn-apply{padding:10px 12px;font-size:12px;}.voucher-card{grid-template-columns:75px minmax(0,1fr);gap:10px;}.voucher-value{grid-row:span 2;padding-right:10px;}.voucher-value strong{font-size:15px;}.voucher-use{grid-column:2;justify-self:start;}.stars-card{flex-wrap:wrap;}.stars-card a{margin-left:41px;}.applied-voucher{flex-wrap:wrap;}.applied-voucher button{margin-left:38px;}}
+        @media(max-width:600px){.voucher-value strong{font-size:13px;white-space:nowrap;}.stars-card a{flex:0 0 calc(100% - 41px);}}
+        .method-list{display:flex;flex-direction:column;gap:12px;}
+        .method{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid #eef1f5;border-radius:12px;background:#f8fafc;}
+        .method input{margin-top:4px;}
+        .method .label{font-weight:700;}
+        .timer{color:#e56b00;font-weight:800;font-size:15px;text-align:right;margin-bottom:8px;}
+
+        .summary-bar{height:6px;background:var(--p);margin:-18px -18px 14px -18px;border-radius:12px 12px 0 0;}
+        .summary-head{display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:flex-start;}
+        .summary-poster{width:90px;height:130px;object-fit:cover;border:1px solid #e5e7eb;}
+        .summary-title{font-size:18px;font-weight:800;line-height:1.3;}
+        .summary-meta{font-size:14px;color:#475569;line-height:1.5;}
+        .summary-meta-strong{margin-top:10px;font-weight:700;}
+        .badge{background:var(--p);color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;}
+        .divider{border-top:1px dashed #e5e7eb;margin:12px 0;}
+        .divider-lg{margin:16px 0;}
+        .row{display:flex;justify-content:space-between;font-size:14px;color:#111827;margin-top:6px;}
+        .promo-row{display:none;} .row.promo-row{color:#168152;}
+        .total{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:18px;margin-top:10px;}
+        .actions{display:flex;gap:12px;margin-top:14px;}
+        .btn-action{flex:1;padding:12px 18px;font-weight:700;border-radius:8px;border:1px solid #e5e7eb;cursor:pointer;text-align:center;}
+        .btn-action.primary{background:var(--p);color:#fff;border-color:var(--p);box-shadow:0 8px 18px rgba(242,107,56,.2);}
+        .btn-action.ghost{background:#fff;color:#0f172a;}
+        .btn-action:disabled{opacity:.6;cursor:not-allowed;}
+
+        /* Modal */
+        .overlay{position:fixed;inset:0;background:rgba(15,23,42,0.45);display:none;align-items:center;justify-content:center;z-index:999;}
+        .modal{background:#fff;border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,0.18);max-width:520px;width:90%;padding:20px;position:relative;}
+        .modal h3{font-size:18px;font-weight:800;text-align:center;margin-bottom:12px;color:#0f172a;}
+        .modal .row-line{display:flex;justify-content:space-between;margin:6px 0;font-size:14px;}
+        .modal .divider{margin:10px 0;border-top:1px dashed #e5e7eb;}
+        .modal-actions{display:flex;gap:10px;margin-top:12px;}
+        .close-modal{position:absolute;right:10px;top:8px;background:none;border:none;font-size:18px;cursor:pointer;color:#9ca3af;}
+        .agree{display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:13px;color:#374151;}
+        .agree input{margin-top:3px;}
+
+        .method-description{font-size:13px;line-height:1.8;color:#65748b;margin:6px 0 0;}
+        .method-instructions{font-size:12px;line-height:1.9;white-space:pre-line;overflow-wrap:anywhere;color:#4b627f;background:#eef4fb;border-left:2px solid #a3c3eb;padding:9px 12px;margin:10px 0 0;}
+        .method-highlight-badge{display:inline-flex;padding:3px 7px;border-radius:5px;background:#e6f1ff;color:#1461ab;font-size:10px;font-weight:700;}
+        .payment-methods-empty{padding:18px;border:1px solid #d6e3f4;border-radius:10px;background:#f3f7fd;color:#526985;font-size:13px;line-height:1.9;}
+        @media (max-width: 1024px) {
+                .layout{grid-template-columns:1fr;}
+        }
+
+        @media (max-width: 720px) {
+                .topbar-inner{flex-direction:column;align-items:flex-start;}
+                .actions{flex-direction:column;}
+                .summary-head{grid-template-columns:1fr;}
+                .summary-poster{width:100%;height:auto;max-height:240px;}
+                .progress{justify-content:flex-start;}
+                .step{min-width:120px;}
+        }

@@ -28,9 +28,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $home = $this->homeForRole($request->user()?->role);
+        $role = $request->user()?->role;
+        $home = $this->homeForRole($role);
 
-        return redirect()->intended($home);
+        if ($role && $role !== 'customer') {
+            return redirect($home)->with('success', 'Đăng nhập thành công.');
+        }
+
+        return redirect()->intended($home)->with('success', 'Đăng nhập thành công.');
     }
 
     /**
@@ -44,15 +49,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/')->with('success', 'Đã đăng xuất.');
     }
 
     private function homeForRole(?string $role): string
     {
         return match ($role) {
             'admin'   => route('admin.dashboard', absolute: false),
-            'manager' => route('manager.dashboard', absolute: false),
-            'staff'   => route('staff.dashboard', absolute: false),
+            'manager', 'staff' => route('admin.dashboard', absolute: false),
             'customer' => route('home', absolute: false),
             default   => route('home', absolute: false),
         };

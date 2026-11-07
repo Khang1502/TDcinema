@@ -16,12 +16,18 @@ class Showtime extends Model
         'end_time',
         'base_price',
         'status',
+        'source',
+        'external_id',
     ];
 
-    protected $dates = [
-        'start_time',
-        'end_time',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'start_time' => 'datetime',
+            'end_time' => 'datetime',
+            'base_price' => 'decimal:2',
+        ];
+    }
 
     public function movie()
     {
@@ -38,4 +44,3 @@ class Showtime extends Model
         return $this->hasMany(Ticket::class);
     }
 }
-

@@ -1,0 +1,41 @@
+/* Additional membership themes shared by the admin editor, catalog, gifts and customer cards. */
+.le-page .le-color.ruby,.le-card.ruby,.ma-level.ruby:not(.is-disabled),.gifts-page .ruby{--tier:#ef9aaa;--tier-bg:#49283a;--tier-rgb:239,154,170;--card-start:#4b2037;--card-end:#9b3654;--accent:#ffd8e4}
+.membership-level.ruby,.membership-reward.ruby{--level-color:#a13050;--level-bg:#fdebf0;--reward-ink:#a13050;--reward-soft:#fdebf0}
+.membership-digital-card.ruby{--card-accent:#ffd8e4;--card-glow:#b84b6b;background:radial-gradient(ellipse at 90% 5%,var(--card-glow),transparent 65%),linear-gradient(130deg,#4b2037,#9b3654)}
+.membership-tier-tag.ruby{color:#a13050;background:#fdebf0}
+.le-page .le-color.emerald,.le-card.emerald,.ma-level.emerald:not(.is-disabled),.gifts-page .emerald{--tier:#8dd7ae;--tier-bg:#1d3f34;--tier-rgb:141,215,174;--card-start:#113d32;--card-end:#28654b;--accent:#c3f1d7}
+.membership-level.emerald,.membership-reward.emerald{--level-color:#21784e;--level-bg:#e8f6ec;--reward-ink:#21784e;--reward-soft:#e8f6ec}
+.membership-digital-card.emerald{--card-accent:#c3f1d7;--card-glow:#318563;background:radial-gradient(ellipse at 90% 5%,var(--card-glow),transparent 65%),linear-gradient(130deg,#113d32,#28654b)}
+.membership-tier-tag.emerald{color:#21784e;background:#e8f6ec}
+.le-page .le-color.orange,.le-card.orange,.ma-level.orange:not(.is-disabled),.gifts-page .orange{--tier:#f1b777;--tier-bg:#47311e;--tier-rgb:241,183,119;--card-start:#4b2b1a;--card-end:#9e5724;--accent:#ffe3bf}
+.membership-level.orange,.membership-reward.orange{--level-color:#99601d;--level-bg:#fff1df;--reward-ink:#99601d;--reward-soft:#fff1df}
+.membership-digital-card.orange{--card-accent:#ffe3bf;--card-glow:#ad7131;background:radial-gradient(ellipse at 90% 5%,var(--card-glow),transparent 65%),linear-gradient(130deg,#4b2b1a,#9e5724)}
+.membership-tier-tag.orange{color:#99601d;background:#fff1df}
+.le-page .le-color.rose,.le-card.rose,.ma-level.rose:not(.is-disabled),.gifts-page .rose{--tier:#edacd2;--tier-bg:#472b43;--tier-rgb:237,172,210;--card-start:#44233f;--card-end:#9b5086;--accent:#ffd8f0}
+.membership-level.rose,.membership-reward.rose{--level-color:#9a467e;--level-bg:#fceff8;--reward-ink:#9a467e;--reward-soft:#fceff8}
+.membership-digital-card.rose{--card-accent:#ffd8f0;--card-glow:#ae659a;background:radial-gradient(ellipse at 90% 5%,var(--card-glow),transparent 65%),linear-gradient(130deg,#44233f,#9b5086)}
+.membership-tier-tag.rose{color:#9a467e;background:#fceff8}
+.le-page .le-color.cyan,.le-card.cyan,.ma-level.cyan:not(.is-disabled),.gifts-page .cyan{--tier:#89daed;--tier-bg:#173d49;--tier-rgb:137,218,237;--card-start:#123845;--card-end:#227e98;--accent:#cbf7ff}
+.membership-level.cyan,.membership-reward.cyan{--level-color:#21768b;--level-bg:#e5f7fc;--reward-ink:#21768b;--reward-soft:#e5f7fc}
+.membership-digital-card.cyan{--card-accent:#cbf7ff;--card-glow:#369fb2;background:radial-gradient(ellipse at 90% 5%,var(--card-glow),transparent 65%),linear-gradient(130deg,#123845,#227e98)}
+.membership-tier-tag.cyan{color:#21768b;background:#e5f7fc}
+.le-page .le-color.indigo,.le-card.indigo,.ma-level.indigo:not(.is-disabled),.gifts-page .indigo{--tier:#acaeee;--tier-bg:#2c2f54;--tier-rgb:172,174,238;--card-start:#22294b;--card-end:#514f94;--accent:#e3e1ff}
+.membership-level.indigo,.membership-reward.indigo{--level-color:#535cb1;--level-bg:#efeffd;--reward-ink:#535cb1;--reward-soft:#efeffd}
+.membership-digital-card.indigo{--card-accent:#e3e1ff;--card-glow:#686eb7;background:radial-gradient(ellipse at 90% 5%,var(--card-glow),transparent 65%),linear-gradient(130deg,#22294b,#514f94)}
+.membership-tier-tag.indigo{color:#535cb1;background:#efeffd}
+.le-page .le-color.bronze,.le-card.bronze,.ma-level.bronze:not(.is-disabled),.gifts-page .bronze{--tier:#d1a07d;--tier-bg:#403022;--tier-rgb:209,160,125;--card-start:#442d22;--card-end:#825739;--accent:#f6d9c6}
+.membership-level.bronze,.membership-reward.bronze{--level-color:#895c3d;--level-bg:#f5ebe2;--reward-ink:#895c3d;--reward-soft:#f5ebe2}
+.membership-digital-card.bronze{--card-accent:#f6d9c6;--card-glow:#936743;background:radial-gradient(ellipse at 90% 5%,var(--card-glow),transparent 65%),linear-gradient(130deg,#442d22,#825739)}
+.membership-tier-tag.bronze{color:#895c3d;background:#f5ebe2}
+.le-page .le-color.navy,.le-card.navy,.ma-level.navy:not(.is-disabled),.gifts-page .navy{--tier:#91b1d7;--tier-bg:#1f334a;--tier-rgb:145,177,215;--card-start:#12273e;--card-end:#25486d;--accent:#d5e6ff}
+.membership-level.navy,.membership-reward.navy{--level-color:#365b8b;--level-bg:#eaf0f9;--reward-ink:#365b8b;--reward-soft:#eaf0f9}
+.membership-digital-card.navy{--card-accent:#d5e6ff;--card-glow:#527598;background:radial-gradient(ellipse at 90% 5%,var(--card-glow),transparent 65%),linear-gradient(130deg,#12273e,#25486d)}
+.membership-tier-tag.navy{color:#365b8b;background:#eaf0f9}
+.le-page .le-color.coral,.le-card.coral,.ma-level.coral:not(.is-disabled),.gifts-page .coral{--tier:#efaa94;--tier-bg:#482d2b;--tier-rgb:239,170,148;--card-start:#4d282c;--card-end:#a6584d;--accent:#ffe1d8}
+.membership-level.coral,.membership-reward.coral{--level-color:#a15343;--level-bg:#fff0e9;--reward-ink:#a15343;--reward-soft:#fff0e9}
+.membership-digital-card.coral{--card-accent:#ffe1d8;--card-glow:#b97565;background:radial-gradient(ellipse at 90% 5%,var(--card-glow),transparent 65%),linear-gradient(130deg,#4d282c,#a6584d)}
+.membership-tier-tag.coral{color:#a15343;background:#fff0e9}
+.le-page .le-color.graphite,.le-card.graphite,.ma-level.graphite:not(.is-disabled),.gifts-page .graphite{--tier:#b9c2cc;--tier-bg:#303841;--tier-rgb:185,194,204;--card-start:#242c36;--card-end:#4a5665;--accent:#e7eff8}
+.membership-level.graphite,.membership-reward.graphite{--level-color:#566575;--level-bg:#edf0f5;--reward-ink:#566575;--reward-soft:#edf0f5}
+.membership-digital-card.graphite{--card-accent:#e7eff8;--card-glow:#738293;background:radial-gradient(ellipse at 90% 5%,var(--card-glow),transparent 65%),linear-gradient(130deg,#242c36,#4a5665)}
+.membership-tier-tag.graphite{color:#566575;background:#edf0f5}

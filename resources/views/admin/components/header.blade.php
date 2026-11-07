@@ -1,25 +1,17 @@
-<header class="w-full bg-[#0f1f36] border-b border-slate-800/70 shadow-lg shadow-black/20">
-    <div class="h-16 max-w-7xl mx-auto px-8 flex items-center justify-between">
-        {{-- Bên trái: breadcrumb + tiêu đề --}}
+<header class="admin-topbar">
+    @php $adminBrand = $adminBrand ?? \App\Models\HeaderSetting::current(); @endphp
+    <div class="admin-topbar__left">
+        <a class="admin-mobile-brand" href="{{ route('admin.dashboard') }}" aria-label="Bảng điều khiển {{ $adminBrand->brand_name }}"><img src="{{ $adminBrand->logoUrl() }}" width="38" height="38" alt="Logo {{ $adminBrand->brand_name }}"></a>
+        <button class="mobile-menu-button" type="button" data-sidebar-open aria-label="Mở menu">@include('admin.partials.icon', ['name'=>'menu', 'size'=>18])</button>
         <div>
-            <div class="text-xs text-slate-400 uppercase tracking-wide">ADMIN / Home</div>
-            <h1 class="text-xl font-semibold mt-1">@yield('title', 'Bảng điều khiển')</h1>
+            <p class="admin-breadcrumb"><span>TD Cinema</span><b>/</b>@yield('title', 'Bảng điều khiển')</p>
+            <h1>@yield('title', 'Bảng điều khiển')</h1>
         </div>
-
-        {{-- Bên phải: filter & avatar --}}
-        <div class="flex items-center space-x-4">
-            @if (!empty($showCinemaFilter))
-                <button
-                    class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700">
-                    Tất cả các rạp
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                         fill="currentColor" class="w-4 h-4 ml-2">
-                        <path fill-rule="evenodd"
-                              d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.1 1.02l-4.25 4.5a.75.75 0 01-1.1 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                              clip-rule="evenodd" />
-                    </svg>
-                </button>
-            @endif
-        </div>
+    </div>
+    <div class="admin-topbar__right">
+        <span class="admin-role-badge">{{ auth()->user()->adminRoleLabel() }}</span>
+        <div class="admin-date"><span class="admin-date__dot"></span><span>{{ now()->format('d/m/Y') }}</span></div>
+        <a href="{{ route('home') }}" class="admin-view-site" aria-label="Về trang khách">Về trang khách <span aria-hidden="true">@include('admin.partials.icon', ['name'=>'arrow-right', 'size'=>18])</span></a>
+        <a href="{{ route('admin.website.index') }}" class="admin-view-site" aria-label="Quản lý website">@include('admin.partials.icon', ['name'=>'globe', 'size'=>18]) Quản lý website</a>
     </div>
 </header>

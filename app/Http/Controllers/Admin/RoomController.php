@@ -15,7 +15,7 @@ class RoomController extends Controller
     {
         $cinemaId = $request->get('cinema_id');
 
-        $roomsQuery = Room::with('cinema')->orderBy('name');
+        $roomsQuery = Room::with('cinema')->orderBy('cinema_id')->orderBy('id');
         if ($cinemaId) {
             $roomsQuery->where('cinema_id', $cinemaId);
         }
@@ -67,7 +67,7 @@ class RoomController extends Controller
         $data = $request->validate([
             'cinema_id'   => ['required', 'exists:cinemas,id'],
             'name'        => ['required', 'string', 'max:255'],
-            'type'        => ['nullable', 'string', 'max:100'],
+            'type'        => ['required', 'in:2D,3D,IMAX,VIP'],
             'total_seats' => ['nullable', 'integer', 'min:0'],
             'status'      => ['nullable', 'in:active,inactive,maintenance'],
         ]);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cinema;
 use App\Models\Movie;
 use App\Models\Showtime;
 use Carbon\Carbon;
@@ -14,25 +15,58 @@ class MovieController extends Controller
     public function index(Request $request): View
     {
         $status = $request->query('status', 'now_showing');
+        $search = trim((string) $request->query('q', ''));
         $validStatuses = ['now_showing', 'upcoming', 'imax', 'all'];
         if (!in_array($status, $validStatuses, true)) {
             $status = 'now_showing';
         }
 
+        $selectedCinema = Cinema::query()
+            ->whereKey($request->integer('cinema_id'))
+            ->where('status', 'active')
+            ->first();
+
         $query = Movie::orderByDesc('release_date');
-        if ($status !== 'all') {
+        if ($status === 'imax') {
+            $query->imax();
+        } elseif ($status !== 'all') {
             $query->where('status', $status);
         }
+        if ($search !== '') {
+            $query->where(function ($movieQuery) use ($search) {
+                $movieQuery->where('title', 'like', "%{$search}%")
+                    ->orWhere('genre', 'like', "%{$search}%")
+                    ->orWhere('director', 'like', "%{$search}%")
+                    ->orWhere('actors', 'like', "%{$search}%");
+            });
+        }
+        if ($selectedCinema) {
+            $query->whereHas('showtimes', function ($showtimeQuery) use ($selectedCinema) {
+                $showtimeQuery
+                    ->where('start_time', '>=', Carbon::now('Asia/Ho_Chi_Minh'))
+                    ->where(function ($statusQuery) {
+                        $statusQuery->where('status', 'active')
+                            ->orWhere('status', 1)
+                            ->orWhereNull('status');
+                    })
+                    ->whereHas('room', function ($roomQuery) use ($selectedCinema) {
+                        $roomQuery->where('cinema_id', $selectedCinema->id)
+                            ->where('status', 'active');
+                    });
+            });
+        }
 
-        $movies = $query->paginate(12)->appends(['status' => $status]);
+        $movies = $query->paginate(12)->withQueryString();
 
         return view('frontend.movies.index', [
             'movies' => $movies,
             'status' => $status,
+            'search' => $search,
+            'selectedCinema' => $selectedCinema,
         ]);
     }
 
-    public function show(Movie $movie): View
+    public function show(Request $request, Movie $movie): View
     {
         $tz = 'Asia/Ho_Chi_Minh';
         $today = Carbon::now($tz)->startOfDay();
@@ -42,9 +76,25 @@ class MovieController extends Controller
         // Sau khi đăng nhập giữ nguyên trang chi tiết
         session()->put('url.intended', request()->fullUrl());
 
+        $selectedCinema = Cinema::query()
+            ->whereKey($request->integer('cinema_id'))
+            ->where('status', 'active')
+            ->first();
+
         $showtimes = Showtime::with(['room.cinema'])
+            ->whereHas('movie', fn ($q) => $q->where('status', 'now_showing'))
             ->where('movie_id', $movie->id)
             ->whereBetween('start_time', [$today, $endDay])
+            ->where(function ($statusQuery) {
+                $statusQuery->where('status', 'active')
+                    ->orWhere('status', 1)
+                    ->orWhereNull('status');
+            })
+            ->when($selectedCinema, function ($showtimeQuery) use ($selectedCinema) {
+                $showtimeQuery->whereHas('room', function ($roomQuery) use ($selectedCinema) {
+                    $roomQuery->where('cinema_id', $selectedCinema->id);
+                });
+            })
             ->orderBy('start_time')
             ->get();
 
@@ -98,6 +148,12 @@ class MovieController extends Controller
 
         $nowShowing = Movie::where('status', 'now_showing')
             ->where('id', '!=', $movie->id)
+            ->when($selectedCinema, function ($movieQuery) use ($selectedCinema, $today, $endDay) {
+                $movieQuery->whereHas('showtimes', function ($showtimeQuery) use ($selectedCinema, $today, $endDay) {
+                    $showtimeQuery->whereBetween('start_time', [$today, $endDay])
+                        ->whereHas('room', fn ($roomQuery) => $roomQuery->where('cinema_id', $selectedCinema->id));
+                });
+            })
             ->orderByDesc('release_date')
             ->take(5)
             ->get();
@@ -109,6 +165,7 @@ class MovieController extends Controller
             'sidebarMovies' => $nowShowing,
             'cities' => $cities,
             'cinemasByCity' => $cinemasByCity,
+            'selectedCinema' => $selectedCinema,
         ]);
     }
 }

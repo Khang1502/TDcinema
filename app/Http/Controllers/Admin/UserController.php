@@ -22,6 +22,13 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         Gate::authorize('viewAny', User::class);
+        $validated = $request->validate([
+            'q'=>['nullable','string','max:150'],'role'=>['nullable','in:admin,manager,staff,customer'],
+            'status'=>['nullable','in:active,blocked'],'registered_from'=>['nullable','date_format:Y-m-d'],
+            'registered_to'=>array_filter(['nullable','date_format:Y-m-d',$request->filled('registered_from') ? 'after_or_equal:registered_from' : null]),
+            'sort'=>['nullable','in:created_desc,created_asc,role_asc,name'],'cinema_id'=>['nullable','integer','exists:cinemas,id'],
+        ]);
+        $request->merge($validated);
         $query = User::query()->with('cinema');
 
         $search = trim((string) $request->get('q', ''));
@@ -46,6 +53,7 @@ class UserController extends Controller
         if (in_array($status, ['active', 'blocked'], true)) {
             $query->where('status', $status);
         }
+        if ($request->filled('cinema_id')) $query->where('cinema_id',$request->integer('cinema_id'));
 
         if ($dateFrom) {
             $query->whereDate('created_at', '>=', Carbon::parse($dateFrom)->toDateString());
@@ -57,10 +65,11 @@ class UserController extends Controller
         $query = match ($sort) {
             'created_asc' => $query->orderBy('created_at', 'asc'),
             'role_asc' => $query->orderBy('role', 'asc')->orderBy('name', 'asc'),
+            'name' => $query->orderBy('name'),
             default => $query->orderBy('created_at', 'desc'),
         };
 
-        $users = $query->paginate(10)->withQueryString();
+        $users = $query->orderByDesc('id')->paginate(10)->withQueryString();
 
         $filters = [
             'q' => $search,
@@ -69,19 +78,23 @@ class UserController extends Controller
             'registered_from' => $dateFrom,
             'registered_to' => $dateTo,
             'sort' => $sort,
+            'cinema_id'=>$request->query('cinema_id'),
         ];
 
         $totalUsers = User::count();
         $filteredCount = $users->total();
-
-        return view('admin.users.index', compact('users', 'filters', 'totalUsers', 'filteredCount'));
+        $roleCounts = User::selectRaw('role, COUNT(*) as aggregate')->groupBy('role')->pluck('aggregate','role');
+        $stateCounts = User::selectRaw('status, COUNT(*) as aggregate')->groupBy('status')->pluck('aggregate','status');
+        $cinemas = Cinema::orderBy('name')->get(['id','name']);
+        return view('admin.users.index', compact('users','filters','totalUsers','filteredCount','roleCounts','stateCounts','cinemas'));
     }
 
     public function create(): View
     {
         Gate::authorize('create', User::class);
         $cinemas = Cinema::orderBy('name')->get(['id','name']);
-        return view('admin.users.create', compact('cinemas'));
+        $adminOnly = request()->boolean('admin_only');
+        return view('admin.users.create', compact('cinemas', 'adminOnly'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -91,11 +104,17 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:150', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:20'],
+            'birthday' => ['nullable', 'date'],
+            'address' => ['nullable', 'string', 'max:255'],
             'role' => ['required', Rule::in(['admin', 'manager', 'staff', 'customer'])],
             'status' => ['required', Rule::in(['active', 'blocked'])],
             'cinema_id' => ['nullable', 'exists:cinemas,id'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'return_to' => ['nullable', Rule::in(['permissions', 'users'])],
         ]);
+
+        $returnTo = $data['return_to'] ?? 'users';
+        unset($data['return_to']);
 
         $data['password'] = Hash::make($data['password']);
         $data['is_active'] = $data['status'] === 'active';
@@ -105,7 +124,8 @@ class UserController extends Controller
 
         User::create($data);
 
-        return redirect()->route('admin.users.index')->with('success', 'Tạo người dùng thành công.');
+        return redirect()->route($returnTo === 'permissions' ? 'admin.permissions.index' : 'admin.users.index')
+            ->with('success', 'Tạo tài khoản thành công.');
     }
 
     public function show(User $user): View
@@ -128,11 +148,17 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:150', Rule::unique('users', 'email')->ignore($user->id)],
             'phone' => ['nullable', 'string', 'max:20'],
+            'birthday' => ['nullable', 'date'],
+            'address' => ['nullable', 'string', 'max:255'],
             'role' => ['required', Rule::in(['admin', 'manager', 'staff', 'customer'])],
             'status' => ['required', Rule::in(['active', 'blocked'])],
             'cinema_id' => ['nullable', 'exists:cinemas,id'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'return_to' => ['nullable', Rule::in(['permissions', 'users'])],
         ]);
+
+        $returnTo = $data['return_to'] ?? 'users';
+        unset($data['return_to']);
 
         if (!empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
@@ -142,41 +168,64 @@ class UserController extends Controller
 
         $data['is_active'] = $data['status'] === 'active';
 
-        if ($user->id === auth()->id()) {
+        if ($user->id === Auth::id()) {
             unset($data['role'], $data['status'], $data['is_active']);
+        }
+        if ($user->role === 'admin' && ($data['role'] ?? 'admin') !== 'admin'
+            && User::where('role', 'admin')->count() <= 1) {
+            return back()->withInput()->withErrors(['role' => 'Hệ thống phải luôn còn ít nhất một Super admin.']);
+        }
+        if ($user->role === 'admin' && ($data['status'] ?? $user->status) === 'blocked'
+            && User::where('role', 'admin')->where('status', 'active')->count() <= 1) {
+            return back()->withInput()->withErrors(['status' => 'Không thể khóa Super admin đang hoạt động cuối cùng.']);
         }
         if (!in_array($data['role'] ?? $user->role, ['staff', 'manager'], true)) {
             $data['cinema_id'] = null;
         }
 
-        $user->update($data);
+        $resetEmailVerification = isset($data['email']) && $data['email'] !== $user->email;
+
+        $user->fill($data);
+        if ($resetEmailVerification) {
+            $user->email_verified_at = null;
+        }
+        $user->save();
 
         Log::info('user.updated', [
-            'by' => auth()->id(),
+            'by' => Auth::id(),
             'target' => $user->id,
         ]);
 
-        return redirect()->route('admin.users.index')->with('success', 'Cập nhật người dùng thành công.');
+        return redirect()->route($returnTo === 'permissions' ? 'admin.permissions.index' : 'admin.users.index')
+            ->with('success', 'Cập nhật tài khoản thành công.');
     }
 
     /**
      * @throws AuthorizationException
      */
-    public function destroy(User $user): RedirectResponse
+    public function destroy(Request $request, User $user): RedirectResponse
     {
         Gate::authorize('delete', $user);
-        if ($user->id === auth()->id()) {
+        if ($user->id === Auth::id()) {
             throw new AuthorizationException('Không thể xóa chính mình.');
+        }
+
+        if ($user->role === 'admin' && User::where('role', 'admin')->count() <= 1) {
+            return back()->with('error', 'Không thể xóa Super admin cuối cùng.');
         }
 
         $user->delete();
 
         Log::info('user.deleted', [
-            'by' => auth()->id(),
+            'by' => Auth::id(),
             'target' => $user->id,
         ]);
 
-        return redirect()->route('admin.users.index')->with('success', 'Đã xóa người dùng.');
+        $returnRoute = $request->input('return_to') === 'permissions'
+            ? 'admin.permissions.index'
+            : 'admin.users.index';
+
+        return redirect()->route($returnRoute)->with('success', 'Đã xóa tài khoản. Dữ liệu giao dịch cũ vẫn được giữ lại.');
     }
 
     public function toggleStatus(User $user): RedirectResponse
@@ -184,6 +233,10 @@ class UserController extends Controller
         Gate::authorize('toggleStatus', $user);
 
         $nextStatus = $user->status === 'active' ? 'blocked' : 'active';
+        if ($user->role === 'admin' && $nextStatus === 'blocked'
+            && User::where('role', 'admin')->where('status', 'active')->count() <= 1) {
+            return back()->withErrors(['user' => 'Không thể khóa Super admin đang hoạt động cuối cùng.']);
+        }
         $user->status = $nextStatus;
         $user->is_active = $nextStatus === 'active';
         $user->save();
@@ -203,7 +256,7 @@ class UserController extends Controller
         }
 
         Log::info('user.toggle_status', [
-            'by' => auth()->id(),
+            'by' => Auth::id(),
             'target' => $user->id,
             'status' => $nextStatus,
         ]);

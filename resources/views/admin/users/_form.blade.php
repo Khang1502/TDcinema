@@ -1,5 +1,8 @@
-@php
+﻿@php
     $isEdit = isset($user);
+    $adminOnly = $adminOnly ?? request()->boolean('admin_only');
+    $availableRoles = ['admin'=>'Super admin','manager'=>'Manager admin','staff'=>'Basic admin'];
+    if (!$adminOnly) $availableRoles['customer'] = 'Khách hàng';
 @endphp
 <div class="space-y-4">
     <div>
@@ -16,12 +19,22 @@
             <input type="text" name="phone" value="{{ old('phone', $user->phone ?? '') }}" class="users-input">
         </div>
     </div>
+    <div class="grid md:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm text-slate-300 mb-1">Ngày sinh</label>
+            <input type="date" name="birthday" value="{{ old('birthday', isset($user) && $user->birthday ? $user->birthday->format('Y-m-d') : '') }}" class="users-input">
+        </div>
+        <div>
+            <label class="block text-sm text-slate-300 mb-1">Địa chỉ</label>
+            <input type="text" name="address" value="{{ old('address', $user->address ?? '') }}" class="users-input">
+        </div>
+    </div>
 <div class="grid md:grid-cols-3 gap-4">
         <div>
             <label class="block text-sm text-slate-300 mb-1">Vai trò</label>
             <select name="role" class="users-select" required id="roleField">
-                @foreach (['admin'=>'Admin','manager'=>'Manager','staff'=>'Staff','customer'=>'Customer'] as $key=>$label)
-                    <option value="{{ $key }}" {{ old('role', $user->role ?? '') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                @foreach ($availableRoles as $key=>$label)
+                    <option value="{{ $key }}" {{ old('role', $user->role ?? ($adminOnly ? 'staff' : 'customer')) === $key ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
         </div>
@@ -39,7 +52,7 @@
         </div>
     </div>
     <div id="cinemaWrapper">
-        <label class="block text-sm text-slate-300 mb-1">Rạp phụ trách (chỉ Staff/Manager)</label>
+        <label class="block text-sm text-slate-300 mb-1">Rạp phụ trách (Basic/Manager admin)</label>
         <select name="cinema_id" class="users-select">
             <option value="">— Chọn rạp —</option>
             @foreach($cinemas as $cinema)
@@ -50,3 +63,6 @@
         </select>
     </div>
 </div>
+@if(request('from') === 'permissions' || request()->boolean('admin_only'))
+    <input type="hidden" name="return_to" value="permissions">
+@endif

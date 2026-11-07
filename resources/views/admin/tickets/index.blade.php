@@ -1,238 +1,35 @@
 @extends('admin.layouts.app')
-@section('title', 'Quản lý vé')
+@section('title','Quản lý vé')
+@include('admin.partials.directory-assets')
 @section('content')
-<div class="text-slate-50 space-y-6 max-w-7xl mx-auto px-4">
-    <style>
-        .badge {
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .badge-success { background: #0b3c2d; color: #1acf64; border: 1px solid #0f6142; }
-        .badge-warning { background: #3b2a0a; color: #facc15; border: 1px solid #b45309; }
-        .badge-danger { background: #3b0d0d; color: #f87171; border: 1px solid #b91c1c; }
-        .badge-muted { background: #111827; color: #cbd5e1; border: 1px solid #1f2937; }
-        .badge-info { background: #1e3a8a; color: #c7d2fe; border: 1px solid #2563eb; }
-        .pagination { @apply flex items-center gap-2 mt-4 text-sm; }
-        .pagination li a,
-        .pagination li span {
-            background: #0f172a;
-            color: #dbeafe;
-            border: 1px solid #1f2937;
-            padding: 6px 10px;
-            border-radius: 10px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 34px;
-        }
-        .pagination li a:hover { background: #111a2f; color: #fff; }
-        .pagination li.active span { background: #2563eb; color: #fff; border-color: #2563eb; }
-        .pagination li.disabled span { opacity: .5; }
-    </style>
-
-    <div class="space-y-1">
-        <p class="text-slate-400 text-sm">Danh sách vé</p>
-        <h1 class="text-3xl font-bold">Quản lý vé</h1>
-    </div>
-
-    @if (session('success'))
-        <div class="bg-emerald-500/10 border border-emerald-600 text-emerald-200 px-4 py-3 rounded-lg">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    <div class="bg-[#111a2f] border border-slate-800 rounded-xl p-4 space-y-4 shadow">
-        <form method="GET" class="grid md:grid-cols-4 gap-3">
-            <select name="movie_id" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100" onchange="this.form.submit()">
-                <option value="">Tất cả phim</option>
-                @foreach ($movies as $movie)
-                    <option value="{{ $movie->id }}" @selected(($filters['movie_id'] ?? null) == $movie->id)>{{ $movie->title }}</option>
-                @endforeach
-            </select>
-            <select name="cinema_id" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100" onchange="this.form.submit()">
-                <option value="">Tất cả rạp</option>
-                @foreach ($cinemas as $cinema)
-                    <option value="{{ $cinema->id }}" @selected(($filters['cinema_id'] ?? null) == $cinema->id)>{{ $cinema->name }}</option>
-                @endforeach
-            </select>
-            <select name="showtime_id" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100" onchange="this.form.submit()">
-                <option value="">Tất cả suất chiếu</option>
-                @foreach ($showtimes as $st)
-                    @php
-                        $stLabelTime = $st->start_time ? \Carbon\Carbon::parse($st->start_time)->format('d/m H:i') : '';
-                    @endphp
-                    <option value="{{ $st->id }}" @selected(($filters['showtime_id'] ?? null) == $st->id)>
-                        {{ $st->movie->title ?? '' }} - {{ optional($st->room)->name }} ({{ optional(optional($st->room)->cinema)->name }}) {{ $stLabelTime }}
-                    </option>
-                @endforeach
-            </select>
-            <select name="seat_id" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100">
-                <option value="">Tất cả ghế</option>
-                @foreach ($seats as $seat)
-                    <option value="{{ $seat->id }}" @selected(($filters['seat_id'] ?? null) == $seat->id)>
-                        {{ optional($seat->room)->name }} - {{ $seat->seat_row }}{{ $seat->seat_number }}
-                    </option>
-                @endforeach
-            </select>
-
-            <input type="text" name="user" value="{{ $filters['user'] ?? '' }}" placeholder="Khách (tên/email)"
-                   class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 col-span-2 md:col-span-1">
-
-            <select name="status" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100">
-                <option value="">Trạng thái vé</option>
-                @foreach ($statuses as $st)
-                    <option value="{{ $st }}" @selected(($filters['status'] ?? null) === $st)>{{ ucfirst($st) }}</option>
-                @endforeach
-            </select>
-            <select name="payment_status" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100">
-                <option value="">Thanh toán</option>
-                @foreach ($payStatuses as $ps)
-                    <option value="{{ $ps }}" @selected(($filters['payment_status'] ?? null) === $ps)>{{ ucfirst($ps) }}</option>
-                @endforeach
-            </select>
-
-            <div class="flex items-center gap-2">
-                <input type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 flex-1">
-                <span class="text-slate-400 text-sm">→</span>
-                <input type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 flex-1">
-            </div>
-
-            <div class="flex items-center gap-3 md:col-span-4">
-                <button class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg" type="submit">Lọc</button>
-                <a href="{{ route('admin.tickets.index') }}" class="text-slate-300 hover:text-white text-sm">Xóa lọc</a>
-                <a href="{{ route('admin.tickets.create') }}" class="ml-auto inline-flex bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-lg">+ Tạo vé thủ công</a>
-            </div>
-        </form>
-        <form method="POST" action="{{ route('admin.tickets.bulk-checkin') }}"
-              onsubmit="return confirm('Check-in tất cả vé đang lọc? Chỉ áp dụng cho vé Confirmed + Paid.');"
-              class="grid md:grid-cols-4 gap-3 items-center">
-            @csrf
-            @foreach ($filters as $key => $val)
-                @if(!is_null($val) && $val !== '')
-                    <input type="hidden" name="{{ $key }}" value="{{ $val }}">
-                @endif
-            @endforeach
-            <div class="md:col-span-4">
-                <button type="submit" class="inline-flex bg-amber-600 hover:bg-amber-500 text-white font-semibold px-4 py-2 rounded-lg">
-                    Check-in tất cả (đang lọc)
-                </button>
-                <p class="text-xs text-slate-400 mt-1">Chỉ ảnh hưởng vé trạng thái Confirmed và thanh toán Paid theo bộ lọc hiện tại.</p>
-            </div>
-        </form>
-    </div>
-
-    <div class="bg-[#111a2f] border border-slate-800 rounded-xl shadow overflow-x-auto">
-        <table class="min-w-full text-sm">
-            <thead class="text-slate-300 text-xs uppercase tracking-wide">
-                <tr class="border-b border-slate-800/70">
-                    <th class="px-4 py-3 text-left">Mã vé</th>
-                    <th class="px-4 py-3 text-left">Phim / Suất / Phòng / Ghế</th>
-                    <th class="px-4 py-3 text-left">Khách</th>
-                    <th class="px-4 py-3 text-left">Giá vé</th>
-                    <th class="px-4 py-3 text-left">Combo</th>
-                    <th class="px-4 py-3 text-left">Tổng</th>
-                    <th class="px-4 py-3 text-left">Trạng thái vé</th>
-                    <th class="px-4 py-3 text-left">Thanh toán</th>
-                    <th class="px-4 py-3 text-left">Đặt lúc</th>
-                    <th class="px-4 py-3 text-left">Hành động</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-800 text-slate-100">
-                @forelse ($tickets as $ticket)
-                    <tr>
-                        <td class="px-4 py-3 font-semibold">#{{ $ticket->id }}</td>
-                        <td class="px-4 py-3">
-                            <div class="font-semibold">{{ optional($ticket->showtime->movie)->title }}</div>
-                            <div class="text-slate-400 text-xs">
-                                @php
-                                    $st = optional($ticket->showtime);
-                                    $start = $st->start_time ? \Carbon\Carbon::parse($st->start_time)->format('d/m H:i') : '';
-                                @endphp
-                                {{ $start }} -
-                                {{ optional(optional($ticket->showtime)->room)->name }}
-                                ({{ optional(optional(optional($ticket->showtime)->room)->cinema)->name }})
-                                | Ghế: {{ optional($ticket->seat)->seat_row }}{{ optional($ticket->seat)->seat_number }}
-                            </div>
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="font-semibold">{{ optional($ticket->user)->name }}</div>
-                            <div class="text-slate-400 text-xs">{{ optional($ticket->user)->email }}</div>
-                        </td>
-                        @php
-                            $comboTotal = $ticket->foodOrders->sum('total_price');
-                            $grandTotal = $ticket->price + $comboTotal;
-                        @endphp
-                         <td class="px-4 py-3">{{ number_format($ticket->price, 0, ',', '.') }} đ</td>
-                         <td class="px-4 py-3">
-                            @if($comboTotal > 0)
-                                <span class="badge badge-info">{{ number_format($comboTotal, 0, ',', '.') }} đ</span>
-                            @else
-                                <span class="text-slate-400 text-xs">0 đ</span>
-                            @endif
-                         </td>
-                         <td class="px-4 py-3">{{ number_format($grandTotal, 0, ',', '.') }} đ</td>
-                        <td class="px-4 py-3">
-                            @php
-                                $badgeClass = match($ticket->status) {
-                                    'confirmed' => 'badge badge-info',
-                                    'pending' => 'badge badge-warning',
-                                    'used' => 'badge badge-muted',
-                                    'cancelled' => 'badge badge-danger',
-                                    default => 'badge badge-muted'
-                                };
-                            @endphp
-                            <span class="{{ $badgeClass }}">{{ ucfirst($ticket->status) }}</span>
-                        </td>
-                        <td class="px-4 py-3">
-                            @php
-                                $payStatus = optional($ticket->payment)->status ?? 'unpaid';
-                                $payClass = match($payStatus) {
-                                    'paid' => 'badge badge-success',
-                                    'pending' => 'badge badge-warning',
-                                    'refunded' => 'badge badge-warning',
-                                    'failed' => 'badge badge-danger',
-                                    default => 'badge badge-muted'
-                                };
-                            @endphp
-                            <span class="{{ $payClass }}">{{ ucfirst($payStatus) }}</span>
-                        </td>
-                        @php
-                            $createdAt = $ticket->created_at ? \Carbon\Carbon::parse($ticket->created_at)->format('d/m/Y H:i') : '';
-                        @endphp
-                        <td class="px-4 py-3">{{ $createdAt }}</td>
-                        <td class="px-4 py-3 space-x-3 whitespace-nowrap">
-                            <a href="{{ route('admin.tickets.show', $ticket) }}" class="text-blue-400 hover:text-blue-200">Xem</a>
-                            @if($ticket->status !== 'used')
-                                <form method="POST" action="{{ route('admin.tickets.status', $ticket) }}" class="inline">
-                                    @csrf
-                                    <input type="hidden" name="status" value="used">
-                                    <button class="text-emerald-400 hover:text-emerald-200" type="submit">Check-in</button>
-                                </form>
-                            @endif
-                            @if($ticket->status !== 'cancelled' && $ticket->status !== 'used')
-                                <form method="POST" action="{{ route('admin.tickets.status', $ticket) }}" class="inline">
-                                    @csrf
-                                    <input type="hidden" name="status" value="cancelled">
-                                    <button class="text-red-400 hover:text-red-200" type="submit">Hủy</button>
-                                </form>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="8" class="px-4 py-6 text-center text-slate-400">Chưa có vé.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-        <div class="px-4 pb-4">
-            {{ $tickets->links() }}
-        </div>
-    </div>
-</div>
+@php
+    $ticketLabels=['pending'=>'Chờ xác nhận','confirmed'=>'Đã xác nhận','used'=>'Đã check-in','cancelled'=>'Đã hủy'];
+    $paymentLabels=['unpaid'=>'Chưa thanh toán','pending'=>'Chờ thanh toán','paid'=>'Đã thanh toán','refunded'=>'Đã hoàn tiền','failed'=>'Thanh toán thất bại'];
+    $ticketTones=['pending'=>'warning','confirmed'=>'','used'=>'success','cancelled'=>'danger'];
+    $paymentTones=['unpaid'=>'warning','pending'=>'warning','paid'=>'success','refunded'=>'purple','failed'=>'danger'];
+    $ticketParams=array_filter($filters,fn ($value)=>$value !== '' && $value !== null);
+    $ticketsUrl=fn ($changes=[])=>route('admin.tickets.index',array_filter(array_replace($ticketParams,$changes),fn ($value)=>$value !== '' && $value !== null));
+@endphp
+<div class="ad-page">
+<header class="ad-heading"><div><span class="ad-kicker">TD CINEMA · VÉ & CHECK-IN</span><h1>Quản lý vé</h1><p>Tra cứu vé, kiểm tra thanh toán và check-in cho khách.</p></div><a class="ad-button primary" href="{{ route('admin.tickets.create') }}">@include('admin.partials.icon',['name'=>'plus','size'=>18]) Tạo vé thủ công</a></header>
+@if($errors->any())<div class="ad-panel" data-inline-notification role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
+<nav class="ad-stats" aria-label="Lọc nhanh trạng thái vé">@foreach([['total','ticket-check','Tất cả vé','','',''],['ready','square-check','Sẵn sàng check-in','confirmed','paid','success'],['used','circle-check','Đã check-in','used','','success'],['cancelled','circle-x','Đã hủy','cancelled','','danger']] as [$key,$icon,$label,$status,$payStatus,$tone])<a class="ad-stat {{ $tone }} {{ $filters['status'] === $status && $filters['payment_status'] === $payStatus ? 'is-selected' : '' }}" href="{{ $ticketsUrl(['status'=>$status,'payment_status'=>$payStatus]) }}"><span>@include('admin.partials.icon',['name'=>$icon,'size'=>20]) {{ $label }}</span><strong>{{ number_format($counts[$key]) }}</strong><small>Theo phim, rạp, khách và ngày đang lọc</small></a>@endforeach</nav>
+<section class="ad-panel">
+<form class="ad-filter" method="GET" action="{{ route('admin.tickets.index') }}" data-ticket-filter>
+    <label class="ad-search"><span>Tìm vé hoặc khách hàng</span><div>@include('admin.partials.icon',['name'=>'search','size'=>18])<input type="search" name="q" maxlength="150" value="{{ $filters['q'] }}" placeholder="Mã vé #97, tên, email hoặc SĐT..."></div></label><label><span>Phim</span><select name="movie_id"><option value="">Tất cả phim</option>@foreach($movies as $movie)<option value="{{ $movie->id }}" @selected((string)$filters['movie_id'] === (string)$movie->id)>{{ $movie->title }}</option>@endforeach</select></label><label><span>Rạp chiếu</span><select name="cinema_id"><option value="">Tất cả rạp</option>@foreach($cinemas as $cinema)<option value="{{ $cinema->id }}" @selected((string)$filters['cinema_id'] === (string)$cinema->id)>{{ $cinema->name }}</option>@endforeach</select></label><button class="ad-button primary" type="submit">@include('admin.partials.icon',['name'=>'list-filter','size'=>16]) Lọc vé</button>
+    <details class="ad-advanced" @if($filters['showtime_id'] || $filters['seat_id'] || $filters['user'] || $filters['status'] || $filters['payment_status'] || $filters['from'] || $filters['to']) open @endif><summary>Lọc thêm theo suất, ghế, thanh toán & ngày @include('admin.partials.icon',['name'=>'chevron-down','size'=>14])</summary><div>
+        <label class="wide"><span>Suất chiếu</span><select name="showtime_id"><option value="">Tất cả suất chiếu</option>@foreach($showtimes as $show)<option value="{{ $show->id }}" @selected((string)$filters['showtime_id'] === (string)$show->id)>{{ $show->movie?->title }} · {{ $show->start_time?->format('d/m/Y H:i') }} · {{ $show->room?->cinema?->name }} / {{ $show->room?->name }}</option>@endforeach</select></label>
+        <label><span>Ghế</span><select name="seat_id" @disabled($seats->isEmpty())><option value="">{{ $seats->isEmpty() ? 'Lọc theo suất để chọn ghế' : 'Tất cả ghế' }}</option>@foreach($seats as $seat)<option value="{{ $seat->id }}" @selected((string)$filters['seat_id'] === (string)$seat->id)>{{ $seat->seat_row }}{{ $seat->seat_number }}</option>@endforeach</select></label>
+        <label><span>Trạng thái vé</span><select name="status"><option value="">Tất cả trạng thái</option>@foreach($statuses as $status)<option value="{{ $status }}" @selected($filters['status'] === $status)>{{ $ticketLabels[$status] }}</option>@endforeach</select></label><label><span>Thanh toán</span><select name="payment_status"><option value="">Tất cả thanh toán</option>@foreach($payStatuses as $state)<option value="{{ $state }}" @selected($filters['payment_status'] === $state)>{{ $paymentLabels[$state] }}</option>@endforeach</select></label>
+        <label><span>Khách hàng cụ thể</span><input type="search" name="user" maxlength="150" value="{{ $filters['user'] }}" placeholder="Tên, email hoặc SĐT..."></label><label><span>Tạo vé từ ngày</span><input type="date" name="from" value="{{ $filters['from'] }}"></label><label><span>Tạo vé đến ngày</span><input type="date" name="to" value="{{ $filters['to'] }}"></label>
+    </div></details><div class="ad-filter-footer"><a class="ad-reset" href="{{ route('admin.tickets.index') }}">Xóa bộ lọc</a></div>
+</form>
+<div class="ad-bulk"><div><strong>{{ number_format($readyCount) }} vé đang lọc có thể check-in</strong><p>Chỉ vé đã xác nhận và thanh toán thành công mới được check-in.</p></div><form method="POST" action="{{ route('admin.tickets.bulk-checkin') }}" data-confirm="Check-in {{ $readyCount }} vé đủ điều kiện theo bộ lọc hiện tại, gồm cả các trang khác?">@csrf @foreach($ticketParams as $key=>$value)<input type="hidden" name="{{ $key }}" value="{{ $value }}">@endforeach<button class="ad-button success" type="submit" @disabled(!$readyCount)>@include('admin.partials.icon',['name'=>'square-check','size'=>17]) Check-in {{ number_format($readyCount) }} vé</button></form></div>
+<div class="ad-results"><strong>{{ number_format($tickets->total()) }} vé phù hợp</strong><span>Mới nhất trước</span></div>
+<div class="ad-list">@forelse($tickets as $ticket)
+@php $show=$ticket->showtime; $paymentStatus=$ticket->payment?->status ?? 'unpaid'; $comboTotal=$ticket->foodOrders->sum('total_price'); $amount=$ticket->payment?->amount ?? ($ticket->price+$comboTotal); $canCheckin=$ticket->status === 'confirmed' && $paymentStatus === 'paid'; @endphp
+<article class="ad-record" data-ticket-id="{{ $ticket->id }}"><div class="ad-identity"><div><span class="ad-ticket-code">@include('admin.partials.icon',['name'=>'ticket-check','size'=>16]) #{{ $ticket->id }}</span><h2>{{ $show?->movie?->title ?? 'Chưa có thông tin phim' }}</h2><p>{{ $show?->start_time?->format('H:i · d/m/Y') ?? 'Chưa có lịch' }} · {{ $show?->room?->name }}</p><p>{{ $show?->room?->cinema?->name }}</p><span class="ad-ticket-seat">Ghế {{ $ticket->seat?->seat_row }}{{ $ticket->seat?->seat_number }}</span></div></div><div class="ad-meta"><div><span>Khách hàng</span><strong>{{ $ticket->user?->name ?? 'Tài khoản không còn hoạt động' }}</strong><small>{{ $ticket->user?->email }}</small></div><div><span>Tạo vé lúc</span><time>{{ $ticket->created_at?->format('H:i · d/m/Y') ?? '—' }}</time></div><div class="ad-ticket-status"><span class="ad-badge {{ $ticketTones[$ticket->status] ?? '' }}">{{ $ticketLabels[$ticket->status] ?? $ticket->status }}</span><span class="ad-badge {{ $paymentTones[$paymentStatus] ?? '' }}">{{ $paymentLabels[$paymentStatus] ?? $paymentStatus }}</span></div></div><div class="ad-meta"><div><span>Giá trị thanh toán</span><strong class="ad-money">{{ number_format($amount,0,',','.') }} đ</strong></div><div><span>Giá vé / combo trước ưu đãi</span><small>{{ number_format($ticket->price,0,',','.') }} đ / {{ number_format($comboTotal,0,',','.') }} đ</small></div></div><div class="ad-record-actions"><a class="ad-button" href="{{ route('admin.tickets.show',$ticket) }}">@include('admin.partials.icon',['name'=>'eye','size'=>15]) Chi tiết</a>@if($canCheckin)<form method="POST" action="{{ route('admin.tickets.status',$ticket) }}">@csrf<input type="hidden" name="status" value="used"><button class="ad-button success" type="submit">@include('admin.partials.icon',['name'=>'ticket-check','size'=>15]) Check-in</button></form>@endif @if(!in_array($ticket->status,['cancelled','used']))<details class="ad-menu"><summary>Thao tác @include('admin.partials.icon',['name'=>'chevron-down','size'=>13])</summary><div><form method="POST" action="{{ route('admin.tickets.status',$ticket) }}" data-confirm="Hủy vé #{{ $ticket->id }}?">@csrf<input type="hidden" name="status" value="cancelled"><button class="danger" type="submit">@include('admin.partials.icon',['name'=>'circle-x','size'=>15]) Hủy vé</button></form></div></details>@endif</div></article>
+@empty<div class="ad-empty">@include('admin.partials.icon',['name'=>'ticket-check','size'=>34])<h3>Không tìm thấy vé phù hợp</h3><p>Thử đổi mã vé, khách hàng hoặc bộ lọc.</p><a class="ad-button" href="{{ route('admin.tickets.index') }}">Xem tất cả vé</a></div>@endforelse</div>
+@if($tickets->hasPages())<div class="ad-pagination"><span>Hiển thị {{ $tickets->firstItem() }}–{{ $tickets->lastItem() }} / {{ $tickets->total() }} vé</span>{{ $tickets->onEachSide(1)->links() }}</div>@endif
+</section></div>
 @endsection

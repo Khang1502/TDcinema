@@ -1,0 +1,28 @@
+/* Keep the available page width consistent between short and long sections. */
+html { scrollbar-gutter: stable; }
+@supports not (scrollbar-gutter: stable) {
+    html { overflow-y: scroll; }
+}
+
+/* Native navigation keeps normal links, forms and browser history intact. */
+@view-transition { navigation: auto; }
+::view-transition-group(*) {
+    animation-duration: 140ms;
+    animation-timing-function: ease-out;
+}
+.td-site-header { view-transition-name: td-header; }
+.admin-sidebar { view-transition-name: td-admin-sidebar; }
+.admin-topbar { view-transition-name: td-admin-header; }
+::view-transition-group(td-header),
+::view-transition-group(td-admin-sidebar),
+::view-transition-group(td-admin-header) { animation: none; }
+::view-transition-old(td-header),
+::view-transition-old(td-admin-sidebar),
+::view-transition-old(td-admin-header) { display: none; }
+::view-transition-new(td-header),
+::view-transition-new(td-admin-sidebar),
+::view-transition-new(td-admin-header) { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+    @view-transition { navigation: none; }
+    html { scroll-behavior: auto !important; }
+}

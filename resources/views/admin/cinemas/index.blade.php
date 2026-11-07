@@ -1,116 +1,25 @@
 @extends('admin.layouts.app')
-
-@section('title', 'Quản lý rạp phim')
-
+@section('title','Quản lý rạp phim')
+@include('admin.partials.directory-assets')
 @section('content')
-    <style>
-        .cinema-shell { color: #e5e7eb; font-family: 'Manrope','Inter',system-ui,sans-serif; }
-        .card { background: #0f172a; border: 1px solid #1f2937; border-radius: 16px; padding: 14px; }
-        .input-lite { background: #0b1224; border: 1px solid #1f2937; border-radius: 10px; padding: 12px 14px; color: #e5e7eb; width: 100%; }
-        .input-lite:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
-        .btn-soft { background: #111827; border: 1px solid #1f2937; color: #e5e7eb; padding: 10px 14px; border-radius: 10px; min-width: 140px; }
-        .btn-soft:hover { background: #19243a; }
-        .btn-primary { background: #2563eb; color: #fff; padding: 10px 16px; border-radius: 10px; font-weight: 700; }
-        .btn-primary:hover { background: #1d4ed8; }
-        .table-wrap { background: #0f172a; border: 1px solid #1f2937; border-radius: 16px; overflow: hidden; }
-        .table { width: 100%; }
-        .table th, .table td { padding: 14px 12px; text-align: left; }
-        .table th { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .table tr { border-bottom: 1px solid #1f2937; }
-        .badge { padding: 6px 12px; border-radius: 9999px; font-weight: 700; font-size: 12px; display: inline-block; }
-        .badge-green { background: #16a34a33; color: #22c55e; border: 1px solid #22c55e33; }
-        .badge-red { background: #b91c1c33; color: #f87171; border: 1px solid #f8717133; }
-        .badge-amber { background: #f59e0b33; color: #fbbf24; border: 1px solid #fbbf2433; }
-        .icon-btn { background: transparent; border: 1px solid #1f2937; color: #cbd5e1; padding: 8px 10px; border-radius: 10px; }
-        .icon-btn:hover { background: #1f2937; }
-    </style>
-
-    <div class="cinema-shell max-w-7xl mx-auto">
-        <div class="flex items-center justify-between mb-5">
-            <div>
-                <p class="text-sm text-slate-400">Quản lý rạp phim</p>
-                <h1 class="text-2xl font-bold text-white">Quản Lý Rạp Phim</h1>
-            </div>
-            <a href="{{ route('admin.cinemas.create') }}" class="btn-primary">+ Thêm Rạp Mới</a>
-        </div>
-
-        @if (session('success'))
-            <div class="mb-3 bg-emerald-500/10 border border-emerald-500/40 text-emerald-200 rounded-lg p-3">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        <div class="card mb-4">
-            <div class="flex flex-col md:flex-row md:items-center gap-3">
-                <input type="text" placeholder="Tìm theo tên rạp, địa chỉ..." class="input-lite flex-1 min-w-[240px]" disabled>
-                <div class="flex items-center gap-2 md:ml-auto">
-                    <select class="btn-soft" disabled>
-                        <option>Tỉnh/Thành phố</option>
-                    </select>
-                    <select class="btn-soft min-w-[120px]" disabled>
-                        <option>Trạng thái</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <div class="table-wrap">
-            <table class="table text-sm">
-                <thead>
-                    <tr class="bg-[#0b1224]">
-                        <th class="w-64">Tên rạp</th>
-                        <th>Địa chỉ</th>
-                        <th class="w-32">Tỉnh/Thành phố</th>
-                        <th class="w-28 text-center">Số phòng chiếu</th>
-                        <th class="w-32 text-center">Trạng thái</th>
-                        <th class="w-28 text-center">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($cinemas as $cinema)
-                        @php
-                            $statusClass = match($cinema->status) {
-                                'inactive' => 'badge-red',
-                                'maintenance' => 'badge-amber',
-                                default => 'badge-green',
-                            };
-                            $statusLabel = match($cinema->status) {
-                                'inactive' => 'Ngừng hoạt động',
-                                'maintenance' => 'Sửa chữa',
-                                default => 'Đang hoạt động',
-                            };
-                        @endphp
-                        <tr class="hover:bg-[#111a2f] transition">
-                            <td class="font-semibold text-white">{{ $cinema->name }}</td>
-                            <td class="text-slate-300">{{ $cinema->address }}</td>
-                            <td class="text-slate-200">{{ $cinema->city }}</td>
-                            <td class="text-center text-slate-200">{{ $cinema->rooms_count }}</td>
-                            <td class="text-center">
-                                <span class="badge {{ $statusClass }}">{{ $statusLabel }}</span>
-                            </td>
-                            <td class="text-center space-x-2">
-                                <a href="{{ route('admin.cinemas.edit', $cinema) }}" class="icon-btn" title="Sửa">✏️</a>
-                                <form action="{{ route('admin.cinemas.destroy', $cinema) }}" method="POST" class="inline-block" onsubmit="return confirm('Xóa rạp này?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="icon-btn" title="Xóa">🗑️</button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="text-center py-4 text-slate-400">Chưa có rạp nào.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <div class="flex items-center justify-between text-sm text-slate-400 mt-3">
-            <span>Hiển thị {{ $cinemas->firstItem() }} - {{ $cinemas->lastItem() }} / {{ $cinemas->total() }}</span>
-            <div class="flex items-center gap-2">
-                {{ $cinemas->links() }}
-            </div>
-        </div>
-    </div>
+@php
+    $directoryParams=array_filter($filters,fn ($value)=>$value !== '' && $value !== null);
+    $directoryUrl=fn ($changes=[])=>route('admin.cinemas.index',array_filter(array_replace($directoryParams,$changes),fn ($value)=>$value !== '' && $value !== null));
+    $canRooms=auth()->user()->hasAdminPermission('rooms.manage'); $canSeats=auth()->user()->hasAdminPermission('seats.manage');
+@endphp
+<div class="ad-page">
+<header class="ad-heading"><div><span class="ad-kicker">TD CINEMA · HỆ THỐNG RẠP</span><h1>Quản lý rạp phim</h1><p>Theo dõi hình ảnh, địa chỉ, phòng chiếu và hoạt động của từng rạp.</p></div><a class="ad-button primary" href="{{ route('admin.cinemas.create') }}">@include('admin.partials.icon',['name'=>'plus','size'=>18]) Thêm rạp mới</a></header>
+<div class="ad-stats">@foreach([['building-2','Tổng rạp',$cinemaCount,'Toàn bộ hệ thống',''],['circle-check','Đang hoạt động',$counts['active'],'Sẵn sàng phục vụ khách','success'],['projector','Phòng chiếu',$counts['rooms'],'Trong toàn hệ thống',''],['settings-2','Đang sửa chữa',$counts['maintenance'],'Theo trạng thái đã thiết lập','warning']] as [$icon,$label,$number,$hint,$tone])<div class="ad-stat {{ $tone }}"><span>@include('admin.partials.icon',['name'=>$icon,'size'=>19]) {{ $label }}</span><strong>{{ number_format($number) }}</strong><small>{{ $hint }}</small></div>@endforeach</div>
+<section class="ad-panel">
+<nav class="ad-tabs" aria-label="Phân rạp theo khu vực"><a href="{{ $directoryUrl(['region'=>'','city'=>'']) }}" class="{{ !$filters['region'] ? 'is-selected' : '' }}" @if(!$filters['region']) aria-current="page" @endif>@include('admin.partials.icon',['name'=>'globe','size'=>16]) Tất cả rạp <b>{{ $cinemaCount }}</b></a>@foreach($regions as $region)<a href="{{ $directoryUrl(['region'=>$region['key'],'city'=>'']) }}" class="{{ $filters['region'] === $region['key'] ? 'is-selected' : '' }}" @if($filters['region'] === $region['key']) aria-current="page" @endif>{{ $region['label'] }} <b>{{ $region['count'] }}</b></a>@endforeach</nav>
+<form class="ad-filter" method="GET" action="{{ route('admin.cinemas.index') }}"><input type="hidden" name="view" value="{{ $filters['view'] }}">@if($filters['region'])<input type="hidden" name="region" value="{{ $filters['region'] }}">@endif<label class="ad-search"><span>Tìm rạp</span><div>@include('admin.partials.icon',['name'=>'search','size'=>18])<input name="q" type="search" maxlength="255" value="{{ $filters['q'] }}" placeholder="Tên rạp hoặc địa chỉ..."></div></label><label><span>Tỉnh / thành phố</span><select name="city"><option value="">Tất cả tỉnh / thành phố</option>@foreach($cities as $city)<option value="{{ $city }}" @selected($filters['city'] === $city)>{{ $city }}</option>@endforeach</select></label><label><span>Trạng thái</span><select name="status"><option value="">Tất cả trạng thái</option>@foreach(['active'=>'Đang hoạt động','maintenance'=>'Đang sửa chữa','inactive'=>'Ngừng hoạt động'] as $value=>$label)<option value="{{ $value }}" @selected($filters['status'] === $value)>{{ $label }}</option>@endforeach</select></label><button class="ad-button primary" type="submit">@include('admin.partials.icon',['name'=>'list-filter','size'=>16]) Lọc</button>@if($filters['q'] || $filters['city'] || $filters['status'])<div class="ad-filter-footer"><a class="ad-reset" href="{{ route('admin.cinemas.index',array_filter(['region'=>$filters['region'],'view'=>$filters['view']])) }}">Xóa bộ lọc</a></div>@endif</form>
+<div class="ad-results"><div><h2>{{ $filters['region'] ? $regions[$filters['region']]['label'] : 'Toàn bộ hệ thống' }}</h2><span>{{ $cinemas->total() }} rạp phù hợp</span></div><nav class="ad-view" aria-label="Cách xem rạp">@foreach(['grid'=>['columns-3','Thẻ rạp'],'list'=>['rows-3','Danh sách']] as $view=>[$icon,$label])<a class="{{ $filters['view'] === $view ? 'is-selected' : '' }}" href="{{ $directoryUrl(['view'=>$view]) }}" @if($filters['view'] === $view) aria-current="page" @endif>@include('admin.partials.icon',['name'=>$icon,'size'=>16]) {{ $label }}</a>@endforeach</nav></div>
+<div class="ad-cinema-grid {{ $filters['view'] === 'list' ? 'is-list' : '' }}">
+@forelse($cinemas as $cinema)
+@php [$stateLabel,$stateTone]=['active'=>['Đang hoạt động','success'],'maintenance'=>['Đang sửa chữa','warning'],'inactive'=>['Ngừng hoạt động','danger']][$cinema->status] ?? ['Chưa xác định','']; @endphp
+<article class="ad-cinema" data-cinema-id="{{ $cinema->id }}"><div class="ad-cinema-photo"><a href="{{ route('admin.cinemas.edit',$cinema) }}" aria-label="Quản lý ảnh {{ $cinema->name }}"><img src="{{ $cinema->imageUrl() }}" alt="{{ $cinema->hasImage() ? 'Ảnh '.$cinema->name : 'Chưa có ảnh '.$cinema->name }}" loading="lazy" data-fallback="{{ asset('assets/images/ui/cinema-placeholder.svg') }}"></a><span class="ad-badge {{ $stateTone }}">{{ $stateLabel }}</span></div><div class="ad-cinema-body"><h3>{{ $cinema->name }}</h3><p>{{ $cinema->address ?: 'Chưa cập nhật địa chỉ' }}</p>@unless($cinema->hasImage())<p>Chưa có ảnh riêng. Chỉnh sửa rạp để thêm ảnh.</p>@endunless<div class="ad-cinema-meta"><span>{{ $cinema->region_label }} · {{ $cinema->city ?: 'Chưa cập nhật thành phố' }}</span><span>@include('admin.partials.icon',['name'=>'projector','size'=>15]) {{ $cinema->rooms_count }} phòng chiếu</span></div><div class="ad-actions"><a class="ad-button" href="{{ route('admin.cinemas.edit',$cinema) }}">@include('admin.partials.icon',['name'=>'pencil','size'=>15]) Chỉnh sửa</a>@if($canRooms)<a class="ad-button" href="{{ route('admin.rooms.index',['cinema_id'=>$cinema->id]) }}">@include('admin.partials.icon',['name'=>'projector','size'=>15]) Phòng chiếu</a>@endif @if($canSeats)<a class="ad-button" href="{{ route('admin.seats.index',['cinema_id'=>$cinema->id]) }}">@include('admin.partials.icon',['name'=>'armchair','size'=>15]) Sơ đồ ghế</a>@endif<details class="ad-menu"><summary>Thêm @include('admin.partials.icon',['name'=>'chevron-down','size'=>14])</summary><div>@if(auth()->user()->hasAdminPermission('reports.view'))<a href="{{ route('admin.reports.index',['cinema_id'=>$cinema->id,'period'=>'all']) }}">@include('admin.partials.icon',['name'=>'chart-no-axes-combined','size'=>16]) Báo cáo doanh thu</a>@endif<form method="POST" action="{{ route('admin.cinemas.destroy',$cinema) }}" data-confirm="Xóa {{ $cinema->name }}? Rạp có suất chiếu hoặc vé sẽ được chuyển sang ngừng hoạt động.">@csrf @method('DELETE')<button class="danger" type="submit">@include('admin.partials.icon',['name'=>'trash-2','size'=>16]) Xóa rạp</button></form></div></details></div></div></article>
+@empty<div class="ad-empty">@include('admin.partials.icon',['name'=>'building-2','size'=>34])<h3>Chưa có rạp phù hợp</h3><p>Thử đổi khu vực, từ khóa hoặc bộ lọc.</p><a class="ad-button" href="{{ route('admin.cinemas.index') }}">Xem tất cả rạp</a></div>@endforelse
+</div>
+@if($cinemas->hasPages())<div class="ad-pagination"><span>Hiển thị {{ $cinemas->firstItem() }}–{{ $cinemas->lastItem() }} / {{ $cinemas->total() }} rạp</span>{{ $cinemas->onEachSide(1)->links() }}</div>@endif
+</section></div>
 @endsection

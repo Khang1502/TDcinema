@@ -1,0 +1,47 @@
+.movie-archive { max-width:1280px; color:#dce8f7; }
+.archive-heading { display:flex; justify-content:space-between; gap:20px; align-items:center; margin-bottom:24px; }
+.archive-kicker { font-size:11px; font-weight:700; letter-spacing:1.4px; color:#89baf5; }
+.archive-heading h1 { font-size:28px; font-weight:800; margin:7px 0 9px; }
+.archive-heading p,.archive-subtitle { font-size:13px; color:#91a8c3; line-height:1.8; margin:0; }
+.archive-button { display:inline-flex; align-items:center; justify-content:center; padding:11px 16px; border:1px solid #324966; border-radius:9px; color:#bfd7f4; background:#162a43; font-size:12px; font-weight:700; text-decoration:none; white-space:nowrap; cursor:pointer; }
+.archive-button:hover { background:#213c5e; }
+.archive-button.primary { background:#186bbc; border-color:#3384d2; color:white; }
+.archive-search { padding:18px; border:1px solid #293b53; background:#102038; border-radius:12px; margin-bottom:20px; }
+.archive-search label { display:block; color:#a2b8d4; font-size:12px; margin-bottom:10px; }
+.archive-search>div { display:flex; gap:10px; }
+.archive-search input { flex:1; min-width:0; }
+.movie-archive :is(input,select) { padding:11px 14px; border:1px solid #334964; border-radius:9px; background:#09182a; color:#dce8f7; font-size:13px; }
+.archive-panel { background:#102038; border:1px solid #293b53; border-radius:14px; margin-bottom:22px; }
+section.archive-panel { padding:22px; }
+.archive-panel h2 { font-weight:750; font-size:17px; margin:0 0 12px; }
+.archive-table-scroll { min-width:0; overflow-x:auto; }
+.archive-table { width:100%; min-width:720px !important; font-size:13px; }
+.archive-table th,.archive-table td { padding:16px; text-align:left; border-bottom:1px solid #283c55; }
+.archive-table td:not(:first-child) { white-space:nowrap; }
+.archive-table tbody tr:last-child td { border-bottom:0; }
+.archive-table small { display:block; color:#8fa5c1; font-size:11px; line-height:1.7; margin-top:4px; }
+.archive-movie { display:flex; align-items:center; gap:14px; min-width:260px; }
+.archive-movie img { width:48px; height:70px; object-fit:cover; border-radius:7px; flex:none; }
+.archive-movie strong { display:block; max-width:370px; }
+.archive-money { color:#88d8bd !important; font-weight:700; }
+.archive-empty { padding:32px !important; text-align:center !important; color:#92abc9; white-space:normal !important; line-height:1.8; }
+.archive-pagination { display:flex; align-items:center; flex-wrap:wrap; justify-content:space-between; gap:14px; font-size:12px; color:#8ba4c2; margin:18px 0; }
+.archive-hero { display:flex; gap:25px; padding:25px; align-items:start; }
+.archive-hero>img { width:125px; height:185px; object-fit:cover; border-radius:10px; flex:none; }
+.archive-hero>div { min-width:0; }
+.archive-hero h2 { margin:14px 0 10px; }
+.archive-hero p { color:#98aec9; font-size:12px; line-height:1.8; margin:5px 0; }
+.archive-label { display:inline-block; font-size:11px; padding:6px 10px; border:1px solid #496180; border-radius:20px; color:#a9c5e8; }
+.archive-links { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.archive-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:15px; margin:22px 0; }
+.archive-stat { padding:22px; background:#112039; border:1px solid #2b415f; border-radius:13px; }
+.archive-stat>span { color:#9bb4d4; font-size:12px; }
+.archive-stat>strong { display:block; font-size:29px; margin:12px 0 5px; font-weight:800; }
+.archive-stat strong small { font-size:14px; }
+.archive-stat p { color:#839cb9; font-size:11px; line-height:1.7; margin:0; }
+.archive-stat.revenue { background:linear-gradient(135deg,#103e42,#11283f); border-color:#2c6267; }
+.archive-note { color:#8ca9c7; font-size:12px; line-height:1.9; margin-bottom:24px; }
+.archive-restore { display:flex; justify-content:space-between; align-items:center; gap:18px; }
+.archive-restore form { display:flex; gap:10px; }
+@media(max-width:800px) { .archive-heading,.archive-restore { align-items:start; flex-direction:column; } }
+@media(max-width:520px) { .archive-search>div,.archive-restore form { flex-wrap:wrap; } .archive-search input { flex-basis:100%; } .archive-hero { padding:18px; gap:15px; } .archive-hero>img { width:75px; height:110px; } .archive-heading h1 { font-size:23px; } .archive-stats { grid-template-columns:1fr; } }

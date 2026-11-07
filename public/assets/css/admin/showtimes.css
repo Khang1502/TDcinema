@@ -1,0 +1,29 @@
+/* Source: resources/views/admin/showtimes/index.blade.php */
+.st-wrap { max-width: 1200px; margin: 0 auto; color: #dbeafe; }
+    .st-card { background: #10192b; border: 1px solid #1f2937; border-radius: 14px; padding: 18px; }
+    .st-table { width: 100%; border-collapse: collapse; color: #e2e8f0; }
+    .st-table th { text-align: left; padding: 12px 14px; font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: .4px; }
+    .st-table td { padding: 14px; border-top: 1px solid #1f2937; font-size: 14px; }
+    .btn-primary { background: #2563eb; color: #fff; padding: 10px 14px; border-radius: 10px; font-weight: 600; }
+    .btn-ghost { border: 1px solid #1f2937; padding: 10px 12px; border-radius: 10px; color: #dbeafe; background: #0f172a; }
+
+/* Source: resources/views/admin/showtimes/schedule.blade.php */
+.sc-wrap { max-width: 1100px; margin: 0 auto; color: #dbeafe; }
+    .sc-filter { display: grid; grid-template-columns: 280px minmax(0, 1fr) auto; align-items: center; gap: 18px; }
+    .sc-filter-field { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .sc-filter-field label { flex: none; white-space: nowrap; color: #cbd5e1; font-size: 14px; }
+    .sc-filter-field :is(input, select) { flex: 1; min-width: 0; height: 44px; }
+    .sc-filter-submit { display: inline-flex; align-items: center; justify-content: center; height: 44px; min-width: 76px; white-space: nowrap; }
+    @media (max-width: 720px) {
+        .sc-filter { grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: end; }
+        .sc-filter-field { flex-direction: column; align-items: stretch; gap: 8px; }
+        .sc-filter-field:first-child { grid-column: 1 / -1; }
+        .sc-filter-field :is(input, select) { flex: none; }
+    }
+    .sc-card { background: #10192b; border: 1px solid #1f2937; border-radius: 14px; padding: 18px; }
+    .sc-table { width: 100%; border-collapse: collapse; color: #e2e8f0; }
+    .sc-table th { text-align: left; padding: 12px 14px; font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: .4px; }
+    .sc-table td { padding: 14px; border-top: 1px solid #1f2937; font-size: 14px; }
+    .btn-primary { background: #2563eb; color: #fff; padding: 10px 14px; border-radius: 10px; font-weight: 600; }
+
+.schedule-refresh-form{display:flex;gap:20px;align-items:center;flex-wrap:wrap}.schedule-refresh-form>div{flex:1;min-width:200px}.schedule-refresh-form strong{font-size:14px;color:#d6e8ff}.schedule-refresh-form p{font-size:12px;color:#8ea6c5;margin-top:8px;line-height:1.7}.schedule-refresh-form label{display:flex;gap:10px;align-items:center;font-size:12px;color:#b7cbe4}.schedule-refresh-form select{padding:10px;border:1px solid #364a66;border-radius:9px;background:#0c1a2c;color:#eef5ff}

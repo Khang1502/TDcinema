@@ -1,0 +1,4 @@
+Lucide https://github.com/lucide-icons/lucide
+Tag: 0.468.0
+Commit: f12b0de177fbc2a6795e99be065887e72b237123
+Downloaded: 2026-10-11

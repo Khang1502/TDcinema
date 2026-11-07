@@ -17,36 +17,24 @@ class ShowtimeController extends Controller
      */
     public function index(Request $request)
     {
-        $date = $request->input('date', Carbon::today()->format('Y-m-d'));
-        $movieId = $request->input('movie_id');
-        $cinemaId = $request->input('cinema_id');
-        $keyword = $request->input('q');
-
-        $query = Showtime::with(['room.cinema', 'movie'])
-            ->whereDate('start_time', $date)
-            ->orderBy('start_time');
-
-        if ($movieId) {
-            $query->where('movie_id', $movieId);
+        $data = $request->validate(['q'=>['nullable','string','max:150'], 'date'=>['nullable','date_format:Y-m-d'],
+            'movie_id'=>['nullable','integer','exists:movies,id'], 'cinema_id'=>['nullable','integer','exists:cinemas,id']]);
+        $date = $request->has('date') ? ($data['date'] ?? null) : Carbon::today()->toDateString();
+        $movieId = $data['movie_id'] ?? null;
+        $cinemaId = $data['cinema_id'] ?? null;
+        $keyword = trim(preg_replace('/\s+/u',' ',$data['q'] ?? ''));
+        $movies = Movie::orderBy('title')->get(['id','title','status']);
+        $cinemas = \App\Models\Cinema::orderBy('name')->get(['id','name']);
+        $query = Showtime::with(['room.cinema','movie'])->withCount(['tickets as confirmed_tickets_count'=>fn ($q)=>$q->whereIn('status',['confirmed','used'])]);
+        if ($date) {
+            $day = Carbon::createFromFormat('Y-m-d',$date)->startOfDay();
+            $query->where('start_time','>=',$day)->where('start_time','<',$day->copy()->addDay());
         }
-
-        if ($cinemaId) {
-            $query->whereHas('room.cinema', function ($q) use ($cinemaId) {
-                $q->where('id', $cinemaId);
-            });
-        }
-
-        if ($keyword) {
-            $query->whereHas('movie', function ($q) use ($keyword) {
-                $q->where('title', 'like', '%' . $keyword . '%');
-            });
-        }
-
-        $showtimes = $query->paginate(20)->withQueryString();
-        $movies = Movie::orderBy('title')->get();
-        $cinemas = \App\Models\Cinema::orderBy('name')->get();
-
-        return view('admin.showtimes.index', compact('showtimes', 'movies', 'cinemas', 'date', 'movieId', 'cinemaId', 'keyword'));
+        if ($movieId) $query->where('movie_id',$movieId);
+        if ($cinemaId) $query->whereHas('room',fn ($q)=>$q->where('cinema_id',$cinemaId));
+        if ($keyword !== '') $query->whereIn('movie_id',\App\Support\KeywordSearch::matchingIds($movies,$keyword));
+        $showtimes = $query->orderBy('start_time')->orderBy('id')->paginate(20)->withQueryString();
+        return view('admin.showtimes.index',compact('showtimes','movies','cinemas','date','movieId','cinemaId','keyword'));
     }
 
     /**
@@ -65,8 +53,9 @@ class ShowtimeController extends Controller
 
         $showtimes = collect();
         if ($movieId) {
+            $selectedDay = Carbon::parse($date);
             $showtimes = Showtime::with(['room.cinema', 'movie'])
-                ->whereDate('start_time', $date)
+                ->whereBetween('start_time', [$selectedDay->copy()->startOfDay(), $selectedDay->copy()->endOfDay()])
                 ->where('movie_id', $movieId)
                 ->orderBy('start_time')
                 ->get();
@@ -77,8 +66,11 @@ class ShowtimeController extends Controller
 
     public function create(Request $request)
     {
-        $movies = Movie::orderBy('title')->get();
-        $rooms = Room::with('cinema')->orderBy('name')->get();
+        $movies = Movie::where('status','now_showing')->orderBy('title')->get();
+        $rooms = Room::with('cinema')
+            ->orderBy('cinema_id')
+            ->orderBy('id')
+            ->get();
 
         // Prefill khi nhấn “Thêm suất chiếu” từ trang lịch/schedule
         $prefillMovie = $request->query('movie_id');
@@ -108,7 +100,6 @@ class ShowtimeController extends Controller
     public function store(Request $request)
     {
         $data = $this->validatedData($request);
-        $data = $this->normalizeStatus($data);
         $conflicts = $this->findConflicts($data);
         if ($conflicts->isNotEmpty()) {
             return back()
@@ -124,14 +115,16 @@ class ShowtimeController extends Controller
     public function edit(Showtime $showtime)
     {
         $movies = Movie::orderBy('title')->get();
-        $rooms = Room::with('cinema')->orderBy('name')->get();
+        $rooms = Room::with('cinema')
+            ->orderBy('cinema_id')
+            ->orderBy('id')
+            ->get();
         return view('admin.showtimes.edit', compact('showtime', 'movies', 'rooms'));
     }
 
     public function update(Request $request, Showtime $showtime)
     {
         $data = $this->validatedData($request);
-        $data = $this->normalizeStatus($data);
         $conflicts = $this->findConflicts($data, $showtime->id);
         if ($conflicts->isNotEmpty()) {
             return back()
@@ -147,33 +140,32 @@ class ShowtimeController extends Controller
     public function destroy(Showtime $showtime)
     {
         if ($showtime->tickets()->exists()) {
-            $showtime->update(['status' => 'closed']);
+            $showtime->update(['status' => 'cancelled']);
             return redirect()->route('admin.showtimes.index')->with('warning', 'Suất chiếu đã có vé, hệ thống chỉ đóng suất chiếu.');
         }
         $showtime->delete();
         return redirect()->route('admin.showtimes.index')->with('success', 'Đã xóa suất chiếu.');
     }
 
+    public function refreshSchedule(Request $request, \App\Services\MovieScheduleService $schedules)
+    {
+        $data = $request->validate(['days'=>['required','integer','between:1,30']]);
+        $result = $schedules->fill((int) $data['days']);
+        $message = "Đã thêm {$result['created']} suất, cân đối {$result['reassigned']} suất cho phim đang chiếu, gỡ {$result['deleted']} suất sắp chiếu và đóng {$result['closed']} suất có vé.";
+        if ($result['missing']) $message .= ' Có '.count($result['missing']).' lịch chưa đủ phòng trống.';
+        return back()->with($result['missing'] ? 'warning' : 'success', $message);
+    }
+
     private function validatedData(Request $request): array
     {
         return $request->validate([
-            'movie_id'    => ['required', 'exists:movies,id'],
+            'movie_id'    => ['required', \Illuminate\Validation\Rule::exists('movies', 'id')->where('status', 'now_showing')],
             'room_id'     => ['required', 'exists:rooms,id'],
             'start_time'  => ['required', 'date_format:Y-m-d\\TH:i'],
             'end_time'    => ['required', 'date_format:Y-m-d\\TH:i', 'after:start_time'],
             'base_price'  => ['required', 'numeric', 'min:0'],
-            'status'      => ['required', 'in:0,1'],
+            'status'      => ['required', 'in:active,cancelled'],
         ]);
-    }
-
-    private function normalizeStatus(array $data): array
-    {
-        if (!array_key_exists('status', $data)) {
-            return $data;
-        }
-        $val = $data['status'];
-        $data['status'] = (in_array($val, ['open', '1', 'true', 1], true)) ? 1 : 0;
-        return $data;
     }
 
     /**
@@ -182,7 +174,7 @@ class ShowtimeController extends Controller
     public function cloneDay(Request $request)
     {
         $data = $request->validate([
-            'movie_id'    => ['required', 'exists:movies,id'],
+            'movie_id'    => ['required', \Illuminate\Validation\Rule::exists('movies', 'id')->where('status', 'now_showing')],
             'source_date' => ['required', 'date'],
             'target_date' => ['required', 'date'],
             'room_id'     => ['nullable', 'exists:rooms,id'],
@@ -197,7 +189,10 @@ class ShowtimeController extends Controller
 
         $query = Showtime::with(['room.cinema', 'movie'])
             ->where('movie_id', $data['movie_id'])
-            ->whereDate('start_time', $sourceDate);
+            ->whereBetween('start_time', [
+                Carbon::parse($sourceDate)->startOfDay(),
+                Carbon::parse($sourceDate)->endOfDay(),
+            ]);
 
         if (!empty($data['room_id'])) {
             $query->where('room_id', $data['room_id']);
@@ -214,7 +209,12 @@ class ShowtimeController extends Controller
 
         foreach ($sourceShowtimes as $source) {
             $startTime = Carbon::parse($source->start_time)->setDate($targetDay->year, $targetDay->month, $targetDay->day);
-            $endTime = Carbon::parse($source->end_time)->setDate($targetDay->year, $targetDay->month, $targetDay->day);
+            $durationSeconds = (int)$source->start_time->diffInSeconds($source->end_time,false);
+            if ($durationSeconds <= 0) {
+                $skipped[] = 'Suất #'.$source->id.' có thời gian kết thúc không hợp lệ';
+                continue;
+            }
+            $endTime = $startTime->copy()->addSeconds($durationSeconds);
 
             $payload = [
                 'movie_id'   => $source->movie_id,

@@ -10,9 +10,7 @@
     </div>
     <button class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#13263f] text-slate-200 text-sm border border-slate-700 hover:bg-[#173155] transition">
         Tất cả các rạp
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M19 9l-7 7-7-7"/>
-        </svg>
+        @include('admin.partials.icon', ['name'=>'chevron-down', 'size'=>18])
     </button>
 </div>
 
@@ -37,9 +35,7 @@
             @else
                 <div class="flex items-center gap-2 text-sm {{ $card['color'] }}">
                     @if(!empty($card['arrow']))
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M5 15l7-7 7 7"/>
-                    </svg>
+                    @include('admin.partials.icon', ['name'=>'chart-no-axes-combined', 'size'=>18])
                     @endif
                     <span>{{ $card['delta'] }}</span>
                 </div>

@@ -20,17 +20,10 @@
             </select>
         </div>
     </div>
-    <div class="grid md:grid-cols-2 gap-4 items-center">
+    <div>
         <div>
-            <label class="block text-sm text-slate-300 mb-1">Ảnh</label>
-            <input type="file" name="image" accept="image/*" class="svc-input">
-            <p class="text-xs text-slate-500 mt-1">Tối đa 2MB. Bỏ trống nếu không đổi.</p>
+            <label class="block text-sm text-slate-300 mb-1">Ảnh sản phẩm</label>
+            @include('admin.partials.image-upload', ['fieldName' => 'image', 'fieldLabel' => 'Ảnh sản phẩm', 'storedPath' => $food->image ?? null, 'storedUrl' => isset($food) ? $food->imageUrl() : null, 'uploadHint' => 'JPG, PNG, WebP hoặc GIF · Tối đa 2MB.', 'previewClass' => 'is-product'])
         </div>
-        @if(isset($food) && $food->image)
-            <div class="flex items-center gap-3">
-                <div class="text-sm text-slate-400">Ảnh hiện tại:</div>
-                <img src="{{ asset('storage/'.$food->image) }}" alt="{{ $food->name }}" class="w-20 h-20 object-cover rounded-md border border-slate-700">
-            </div>
-        @endif
     </div>
 </div>

@@ -1,0 +1,7 @@
+@extends('admin.layouts.app')
+@section('title','Danh sách thành viên')
+@section('content')<div class="ma-shell">
+@include('admin.membership._header',['title'=>'Danh sách thành viên'])
+<form class="ma-filter" method="GET"><label>Tìm thành viên<input name="q" value="{{ $q }}" placeholder="Tên, email hoặc số điện thoại"></label><label>Cấp bậc<select name="level"><option value="">Tất cả cấp bậc</option>@foreach($levels as $level)<option value="{{ $level->id }}" @selected(request('level')==$level->id)>{{ $level->name }}</option>@endforeach</select></label><button class="ma-button primary">Tìm kiếm</button><a class="ma-button" href="{{ route('admin.membership.members') }}">Đặt lại</a></form>
+<div class="ma-member-list">@forelse($members as $member)<article class="ma-member-row"><span class="ma-avatar">{{ mb_strtoupper(mb_substr($member->name,0,1)) }}</span><div class="ma-member-identity"><strong>{{ $member->name }}</strong><small>{{ $member->email }}</small></div><div><small>Cấp bậc</small><span>{{ $member->member_tier?->name ?? 'Thành viên TD' }}</span></div><div><small>Stars</small><b>{{ number_format($member->points,0,',','.') }}</b></div><a class="ma-button" href="{{ route('admin.membership.member',$member) }}">Xem & điều chỉnh</a></article>@empty<div class="ma-empty">Không tìm thấy thành viên phù hợp.</div>@endforelse</div><div class="ma-pagination">{{ $members->onEachSide(1)->links() }}</div>
+</div>@endsection

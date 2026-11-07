@@ -1,0 +1,35 @@
+@extends('admin.layouts.app')
+@section('title', 'Quản lý header & website')
+@push('styles')<link rel="stylesheet" href="{{ asset('assets/css/admin/content-settings.css') }}?v={{ filemtime(public_path('assets/css/admin/content-settings.css')) }}">@endpush
+@push('styles')<link rel="stylesheet" href="{{ asset('assets/css/admin/header-settings.css') }}?v={{ filemtime(public_path('assets/css/admin/header-settings.css')) }}">@endpush
+@section('content')
+<div class="content-settings header-settings"><div class="settings-heading"><div><span class="settings-kicker">NỘI DUNG WEBSITE</span><h1>Header & thông tin website</h1><p>Thương hiệu, menu và nội dung giới thiệu trên trang khách hàng.</p></div><a class="settings-button" href="{{ route('home') }}" target="_blank" rel="noopener">Xem website @include('admin.partials.icon',['name'=>'external-link','size'=>16])</a></div>
+@if($errors->any())<div data-inline-notification class="settings-error" role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
+<form method="POST" action="{{ route('admin.header.update') }}" enctype="multipart/form-data">@csrf @method('PUT')
+    <section class="settings-panel"><h2>Thương hiệu & tiện ích</h2><p class="settings-help">Thông tin xuất hiện trên đầu các trang khách hàng.</p><div class="settings-fields">
+        @foreach(['brand_name'=>'Tên thương hiệu','login_label'=>'Nút đăng nhập','join_label'=>'Nút thành viên','search_placeholder'=>'Gợi ý tìm kiếm'] as $field=>$label)<label class="settings-field">{{ $label }}<input name="{{ $field }}" maxlength="{{ ['brand_name'=>120,'login_label'=>50,'join_label'=>70,'search_placeholder'=>100][$field] }}" value="{{ old($field,$settings->$field) }}" required></label>@endforeach
+        <div class="header-logo-field wide"><img src="{{ $settings->logoUrl() }}" alt="Logo hiện tại" data-logo-thumbnail><label class="settings-field">Thay logo<input type="file" name="logo" class="admin-file-input" accept="image/png,image/jpeg,image/webp"><small data-logo-status>PNG, JPG, WebP · tối đa 2MB. Chọn ảnh mới để thay logo.</small><a href="{{ $settings->logoUrl() }}" target="_blank" rel="noopener" class="header-logo-link">Xem logo đã lưu @include('admin.partials.icon',['name'=>'external-link','size'=>16])</a></label></div>
+        <div class="wide">@include('admin.partials.image-source', ['imagePath' => $settings->logo_path ?: 'assets/images/logo/logo-transparent.png', 'imageUrl' => $settings->logoUrl(), 'sourceKey' => 'logo', 'sourceLabel' => $settings->logo_path ? 'Đường dẫn logo đã lưu' : 'Đường dẫn logo mặc định'])</div>
+        @foreach(['show_search'=>'Ô tìm kiếm','show_membership'=>'Nút tham gia thành viên'] as $field=>$label)<label class="settings-field">{{ $label }}<select name="{{ $field }}"><option value="1" @selected(old($field,$settings->$field))>Hiển thị</option><option value="0" @selected(!old($field,$settings->$field))>Ẩn</option></select></label>@endforeach
+    </div></section>
+    <section class="settings-panel"><h2>Menu điều hướng</h2><p class="settings-help">Mở từng mục để thay đổi nội dung.</p>
+        @foreach(\App\Models\HeaderSetting::MENUS as $key=>$label)
+        @php $menu=old('menus.'.$key,$settings->menus[$key]); @endphp
+        <details class="settings-menu-panel" {{ $loop->first ? 'open' : '' }}><summary>{{ $label }} <span>Chỉnh sửa @include('admin.partials.icon',['name'=>'chevron-down','size'=>14])</span></summary><div class="settings-fields">
+            <label class="settings-field">Tên menu<input name="menus[{{ $key }}][label]" maxlength="70" value="{{ $menu['label'] }}" required></label>
+            <label class="settings-field">Đường dẫn<input name="menus[{{ $key }}][url]" maxlength="2048" value="{{ $menu['url'] }}" required></label>
+            <label class="settings-field">Thứ tự<input type="number" name="menus[{{ $key }}][sort_order]" min="0" max="99" value="{{ $menu['sort_order'] }}" required></label>
+            <label class="settings-field">Hiển thị<select name="menus[{{ $key }}][is_visible]"><option value="1" @selected($menu['is_visible'])>Hiển thị</option><option value="0" @selected(!$menu['is_visible'])>Ẩn menu</option></select></label>
+        </div>
+        @unless(in_array($key,['movies','cinemas']))
+        <div data-footer-links="{{ $key }}" data-link-prefix="menus[{{ $key }}][children]">
+            <div class="settings-link-list" data-link-list>@foreach($menu['children'] ?? [] as $index=>$child)<div class="settings-link-row settings-child-row"><input name="menus[{{ $key }}][children][{{ $index }}][label]" maxlength="120" value="{{ $child['label'] }}" placeholder="Tên mục con" aria-label="Tên mục con"><input name="menus[{{ $key }}][children][{{ $index }}][url]" maxlength="2048" value="{{ $child['url'] }}" placeholder="Đường dẫn" aria-label="Đường dẫn mục con"><button type="button" data-remove-link aria-label="Xóa mục con">@include('admin.partials.icon',['name'=>'x','size'=>16])</button><input class="child-description" name="menus[{{ $key }}][children][{{ $index }}][description]" maxlength="180" value="{{ $child['description'] ?? '' }}" placeholder="Mô tả ngắn" aria-label="Mô tả mục con"></div>@endforeach</div><button type="button" class="settings-button" data-add-link>@include('admin.partials.icon',['name'=>'plus','size'=>16]) Thêm mục con</button>
+            <template data-link-template><div class="settings-link-row settings-child-row"><input data-field="label" maxlength="120" placeholder="Tên mục con" aria-label="Tên mục con"><input data-field="url" maxlength="2048" placeholder="Đường dẫn" aria-label="Đường dẫn mục con"><button type="button" data-remove-link aria-label="Xóa mục con">@include('admin.partials.icon',['name'=>'x','size'=>16])</button><input class="child-description" data-field="description" maxlength="180" placeholder="Mô tả ngắn" aria-label="Mô tả mục con"></div></template>
+        </div>@endunless
+        </details>@endforeach
+    </section>
+    <section class="settings-panel"><h2>Giới thiệu website trên trang chủ</h2><p class="settings-help">Mỗi đoạn văn cách nhau bằng một dòng trống.</p><div class="settings-fields"><label class="settings-field wide">Tiêu đề<input name="about_title" maxlength="120" value="{{ old('about_title',$settings->about_title) }}" required></label><label class="settings-field wide">Dòng giới thiệu<input name="about_subtitle" maxlength="500" value="{{ old('about_subtitle',$settings->about_subtitle) }}" required></label><label class="settings-field wide">Nội dung<textarea name="about_body" maxlength="12000" rows="12" required>{{ old('about_body',$settings->about_body) }}</textarea></label></div></section>
+    <div class="settings-save"><button class="settings-button primary" type="submit">Lưu thay đổi</button><span>Cập nhật ngay trên các trang khách hàng.</span></div>
+</form></div>
+@endsection
+@push('scripts')<script src="{{ asset('assets/js/admin/footer.js') }}" defer></script><script src="{{ asset('assets/js/admin/header-settings.js') }}?v={{ filemtime(public_path('assets/js/admin/header-settings.js')) }}" defer></script>@endpush

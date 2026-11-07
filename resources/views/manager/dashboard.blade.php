@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    @include('shared.notification-assets')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('shared.page-assets')
+
     <title>Manager Dashboard</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -24,5 +27,6 @@
             Đây là placeholder dashboard cho role Manager. Bạn có thể thêm nội dung sau.
         </div>
     </div>
+@include('shared.notifications')
 </body>
 </html>

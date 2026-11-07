@@ -16,22 +16,8 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        $userId = $request->user()->id;
-        $year = now()->year;
-
-        $yearSpent = \App\Models\Payment::where('status', 'paid')
-            ->whereHas('ticket', fn ($q) => $q->where('user_id', $userId))
-            ->whereYear('paid_at', $year)
-            ->sum('amount');
-
-        $tier2 = 4000000;
-        $progress = $tier2 > 0 ? min(1, $yearSpent / $tier2) : 0;
-
         return view('profile.edit', [
             'user' => $request->user(),
-            'yearSpent' => $yearSpent,
-            'tier2' => $tier2,
-            'progress' => $progress,
         ]);
     }
 
@@ -64,7 +50,9 @@ class ProfileController extends Controller
 
         Auth::logout();
 
-        $user->delete();
+        // Customer self-deletion keeps the existing permanent-delete behavior.
+        // Administrative account removal uses soft deletes to preserve audit data.
+        $user->forceDelete();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

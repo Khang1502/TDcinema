@@ -1,0 +1,75 @@
+.permission-page { display:grid; gap:22px; color:#eaf1fa; }
+.permission-hero { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:18px 24px; padding:28px; border:1px solid rgba(148,163,184,.15); border-radius:18px; background:linear-gradient(125deg,rgba(255,91,61,.13),rgba(14,33,56,.95) 48%,rgba(30,78,128,.18)); box-shadow:0 18px 45px rgba(0,0,0,.18); }
+.permission-hero > div:first-child { grid-row:span 2; }
+.permission-eyebrow,.permission-panel__head span { color:#ff846f; font-size:10px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }
+.permission-hero h2,.permission-edit-heading h2 { margin:7px 0 8px; font-size:clamp(24px,3vw,36px); letter-spacing:-.04em; }
+.permission-hero p,.permission-edit-heading p { max-width:680px; margin:0; color:#94a8bf; font-size:13px; line-height:1.7; }
+.permission-hero__stat { min-width:150px; padding:14px 16px; border:1px solid rgba(255,255,255,.09); border-radius:14px; text-align:center; background:rgba(5,14,26,.38); }
+.permission-hero__stat strong,.permission-hero__stat span { display:block; }
+.permission-hero__stat strong { color:#fff; font-size:30px; }
+.permission-hero__stat span { margin-top:3px; color:#8298b1; font-size:10px; }
+.permission-primary-action,.permission-action { display:inline-flex; align-items:center; justify-content:center; min-height:38px; padding:0 14px; border:1px solid rgba(148,163,184,.22); border-radius:9px; color:#dbe7f5; background:rgba(255,255,255,.035); font-size:11px; font-weight:700; text-decoration:none; cursor:pointer; }
+.permission-primary-action,.permission-action--primary { border-color:transparent; color:#fff; background:linear-gradient(135deg,#ff6d54,#ed432c); box-shadow:0 9px 22px rgba(239,67,44,.18); }
+.permission-action:hover { border-color:rgba(85,165,255,.45); color:#fff; background:rgba(85,165,255,.1); }
+.permission-primary-action:hover,.permission-action--primary:hover { border-color:transparent; background:linear-gradient(135deg,#ff806a,#f04c35); }
+.permission-action--danger { border-color:rgba(239,86,101,.3); color:#ffabb3; background:rgba(180,42,58,.1); }
+.permission-action--danger:hover { border-color:rgba(255,107,120,.55); color:#fff; background:rgba(180,42,58,.24); }
+.role-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.role-card { position:relative; min-height:175px; padding:20px; border:1px solid rgba(148,163,184,.16); border-radius:16px; background:linear-gradient(145deg,rgba(16,31,52,.96),rgba(11,24,41,.96)); overflow:hidden; }
+.role-card::after { content:""; position:absolute; width:110px; height:110px; right:-36px; bottom:-42px; border-radius:50%; background:rgba(85,165,255,.08); }
+.role-card > span { color:#7f96af; font-size:10px; font-weight:800; text-transform:uppercase; }
+.role-card h3 { margin:12px 0 8px; color:#fff; font-size:18px; }
+.role-card p { min-height:42px; margin:0; color:#8499b1; font-size:11px; line-height:1.6; }
+.role-card > strong { display:inline-flex; margin-top:15px; padding:6px 9px; border-radius:7px; color:#8dc6ff; background:rgba(85,165,255,.1); font-size:10px; }
+.role-card--admin { border-color:rgba(255,91,61,.28); }
+.role-card--admin > strong { color:#ff9e8d; background:rgba(255,91,61,.11); }
+.role-card--manager > strong { color:#ffd27a; background:rgba(245,174,57,.1); }
+.permission-panel { border:1px solid rgba(148,163,184,.15); border-radius:17px; background:linear-gradient(145deg,rgba(16,31,52,.96),rgba(11,24,41,.96)); box-shadow:0 16px 42px rgba(0,0,0,.14); overflow:hidden; }
+.permission-panel__head { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:20px 22px; border-bottom:1px solid rgba(148,163,184,.12); }
+.permission-panel__head h3 { margin:5px 0 0; color:#f2f6fb; font-size:17px; }
+.permission-panel__head p { margin:0; color:#7188a2; font-size:10px; }
+.permission-table-wrap { overflow-x:auto; }
+.permission-table { width:100%; min-width:700px; }
+.permission-table th,.permission-table td { padding:13px 18px; text-align:center; }
+.permission-table th:first-child,.permission-table td:first-child { text-align:left; }
+.permission-table td:first-child { color:#bdcada; font-size:12px; }
+.permission-mark { display:inline-grid; width:26px; height:26px; place-items:center; border-radius:50%; font-size:11px; font-weight:800; }
+.permission-mark.is-allowed { color:#65e7a3; background:rgba(57,217,138,.1); }
+.permission-mark.is-denied { color:#536982; background:rgba(148,163,184,.06); }
+.admin-account-list { display:grid; }
+.admin-account-list__head { display:grid; grid-template-columns:minmax(260px,1.2fr) minmax(160px,.55fr) minmax(380px,auto); gap:22px; padding:11px 22px; border-bottom:1px solid rgba(148,163,184,.1); color:#5f7791; background:rgba(4,14,25,.26); font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.admin-account-list__head span:last-child { text-align:right; }
+.admin-account { display:grid; grid-template-columns:minmax(260px,1.2fr) minmax(160px,.55fr) minmax(380px,auto); align-items:center; gap:22px; min-height:88px; padding:16px 22px; border-bottom:1px solid rgba(148,163,184,.1); transition:background .16s ease; }
+.admin-account:hover { background:rgba(65,123,180,.035); }
+.admin-account:last-child { border-bottom:0; }
+.admin-account__profile { display:flex; align-items:center; min-width:0; gap:14px; }
+.admin-account__avatar { display:grid; width:40px; height:40px; place-items:center; border-radius:12px; color:#091526; background:linear-gradient(135deg,#ffd36a,#ff9e45); font-size:13px; font-weight:800; }
+.admin-account__identity { min-width:0; }
+.admin-account__identity strong,.admin-account__identity span,.admin-account__meta span { display:block; }
+.admin-account__identity strong { color:#e9f0f8; font-size:12px; }
+.admin-account__identity span { overflow:hidden; margin-top:4px; color:#7188a2; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+.admin-account__meta { color:#7188a2; font-size:10px; }
+.admin-account__role { margin-bottom:4px; color:#ffae9f !important; font-weight:700; }
+.admin-account__actions { display:grid; grid-template-columns:repeat(3,minmax(108px,1fr)); justify-content:flex-end; gap:8px; }
+.admin-account__actions form { display:contents; }
+.admin-account__actions .permission-action { width:100%; white-space:nowrap; }
+.admin-account__self { display:inline-flex; grid-column:1/-1; align-items:center; justify-content:flex-end; min-height:38px; color:#7188a2; font-size:10px; }
+.permission-empty { padding:22px; color:#8298b1; }
+.permission-edit-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; }
+.permission-edit-body { display:grid; gap:22px; padding:22px; }
+.permission-role-field { display:grid; max-width:380px; gap:7px; color:#9eb0c4; font-size:11px; font-weight:700; }
+.permission-role-field select { height:42px; padding:0 12px; border:1px solid rgba(148,163,184,.2); border-radius:9px; color:#edf3fb; background:#091526; }
+.permission-checkbox-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:0; padding:0; border:0; }
+.permission-checkbox-grid legend { grid-column:1/-1; margin-bottom:3px; color:#8ba0b8; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.permission-checkbox { display:flex; align-items:flex-start; gap:11px; min-height:64px; padding:13px; border:1px solid rgba(148,163,184,.14); border-radius:11px; background:rgba(5,14,26,.34); cursor:pointer; }
+.permission-checkbox:has(input:checked) { border-color:rgba(255,91,61,.32); background:rgba(255,91,61,.07); }
+.permission-checkbox input { margin-top:3px; accent-color:#ff5b3d; }
+.permission-checkbox strong,.permission-checkbox small { display:block; }
+.permission-checkbox strong { color:#dbe7f5; font-size:11px; }
+.permission-checkbox small { margin-top:4px; color:#647b95; font-size:9px; }
+.permission-checkbox.is-protected { cursor:not-allowed; opacity:.55; }
+.permission-super-note { margin:0; padding:13px 15px; border:1px solid rgba(245,174,57,.25); border-radius:10px; color:#e8c77e; background:rgba(245,174,57,.07); font-size:11px; }
+.permission-edit-actions { display:flex; align-items:center; gap:10px; padding:0 22px 22px; }
+@media(max-width:1100px) { .admin-account-list__head{display:none}.admin-account{grid-template-columns:minmax(220px,1fr) minmax(140px,.5fr)}.admin-account__actions{grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr))}.admin-account__self{justify-content:flex-start} }
+@media(max-width:900px) { .role-cards{grid-template-columns:1fr}.permission-hero{grid-template-columns:1fr}.permission-hero>div:first-child{grid-row:auto}.permission-hero__stat{width:100%}.permission-checkbox-grid{grid-template-columns:1fr} }
+@media(max-width:520px) { .permission-hero{padding:20px}.permission-panel__head,.permission-edit-heading{align-items:flex-start;flex-direction:column}.admin-account{grid-template-columns:1fr}.admin-account__meta,.admin-account__actions{grid-column:1}.admin-account__actions{grid-template-columns:1fr}.permission-edit-actions{align-items:stretch;flex-direction:column}.permission-action,.permission-primary-action{width:100%} }

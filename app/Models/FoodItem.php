@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Support\ImageAsset;
 
 class FoodItem extends Model
 {
@@ -16,6 +17,11 @@ class FoodItem extends Model
         'image',
         'status',
     ];
+
+    public function imageUrl(): ?string
+    {
+        return ImageAsset::exists($this->image) ? ImageAsset::url($this->image) : null;
+    }
 
     public function orderItems()
     {

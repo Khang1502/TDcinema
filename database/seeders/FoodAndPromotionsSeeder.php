@@ -23,10 +23,11 @@ class FoodAndPromotionsSeeder extends Seeder
             'name'        => 'Combo Bắp Nước Lớn',
             'description' => '1 bắp lớn + 2 nước ngọt',
             'price'       => 89000,
-            'image'       => '/images/combo1.jpg',
+            'image'       => 'https://cdn.galaxycine.vn/media/2025/4/11/combo-2-big-1920x1320_1744354864910.jpg',
         ]);
 
         $promotion = Promotion::create([
+            'name'         => 'Happy Day',
             'code'         => 'HAPPYDAY',
             'type'         => 'percent',
             'value'        => 20,

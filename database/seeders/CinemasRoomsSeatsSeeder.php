@@ -26,7 +26,7 @@ class CinemasRoomsSeatsSeeder extends Seeder
         for ($roomIndex = 1; $roomIndex <= 2; $roomIndex++) {
             $room = Room::create([
                 'cinema_id'   => $cinema->id,
-                'name'        => 'Phòng ' . $roomIndex,
+                'name'        => 'Rạp ' . $roomIndex,
                 'type'        => $roomIndex === 1 ? '2D' : 'IMAX',
                 'total_seats' => 50,
                 'status'      => 'active',

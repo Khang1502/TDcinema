@@ -8,7 +8,7 @@
     </div>
 
     @if ($errors->any())
-        <div class="bg-red-500/10 border border-red-600 text-red-200 px-4 py-3 rounded-lg space-y-1">
+        <div data-inline-notification class="bg-red-500/10 border border-red-600 text-red-200 px-4 py-3 rounded-lg space-y-1">
             @foreach ($errors->all() as $error)
                 <div>{{ $error }}</div>
             @endforeach

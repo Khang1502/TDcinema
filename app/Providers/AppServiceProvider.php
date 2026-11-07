@@ -12,7 +12,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->scoped(\App\Services\MembershipService::class);
     }
 
     /**
@@ -22,5 +22,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // GIỚI HẠN CHIỀU DÀI STRING MẶC ĐỊNH
         Schema::defaultStringLength(191);
+        \Illuminate\Pagination\Paginator::defaultView('shared.pagination');
+        \Illuminate\Pagination\Paginator::defaultSimpleView('shared.simple-pagination');
     }
 }

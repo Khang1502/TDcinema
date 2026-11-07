@@ -27,8 +27,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Chấp nhận email hoặc tên đăng nhập
-            'email' => ['required', 'string'],
+            'email' => ['required', 'string', 'email', 'max:150'],
             'password' => ['required', 'string'],
         ];
     }
@@ -39,7 +38,8 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'Vui lòng nhập email hoặc tên đăng nhập.',
+            'email.required' => 'Vui lòng nhập email.',
+            'email.email' => 'Email không đúng định dạng.',
             'password.required' => 'Vui lòng nhập mật khẩu.',
         ];
     }
@@ -54,9 +54,13 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         $login = $this->string('email')->trim();
-        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'name';
 
-        if (! Auth::attempt([$field => $login, 'password' => $this->input('password')], $this->boolean('remember'))) {
+        if (! Auth::attempt([
+            'email' => $login,
+            'password' => $this->input('password'),
+            'status' => 'active',
+            'is_active' => true,
+        ], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

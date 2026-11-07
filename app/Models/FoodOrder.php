@@ -19,7 +19,7 @@ class FoodOrder extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function ticket()
@@ -32,4 +32,3 @@ class FoodOrder extends Model
         return $this->hasMany(FoodOrderItem::class);
     }
 }
-

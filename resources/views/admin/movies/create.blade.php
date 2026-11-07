@@ -1,20 +1,12 @@
-@extends('admin.layouts.app')
+﻿@extends('admin.layouts.app')
 
 @section('title', 'Quản lý phim')
 
-@section('content')
-    <style>
-        .page-shell { color: #e5e7eb; font-family: 'Manrope', 'Inter', system-ui, sans-serif; }
-        .card { background: #0f172a; border: 1px solid #1f2937; border-radius: 16px; padding: 22px; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
-        .label { color: #cbd5e1; font-size: 13px; margin-bottom: 6px; display: block; font-weight: 600; }
-        .input { width: 100%; background: #0b1224; border: 1px solid #1f2937; border-radius: 10px; padding: 12px 14px; color: #e5e7eb; }
-        .input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
-        .hint { color: #94a3b8; font-size: 12px; margin-top: 4px; }
-        .btn-primary { background: #2563eb; color: #fff; padding: 10px 16px; border-radius: 10px; font-weight: 700; }
-        .btn-primary:hover { background: #1d4ed8; }
-        .btn-ghost { color: #cbd5e1; }
-    </style>
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/admin/movies.css') }}">
+@endpush
 
+@section('content')
     <div class="page-shell max-w-5xl mx-auto">
         <div class="flex items-center justify-between mb-6">
             <div>
@@ -24,7 +16,7 @@
         </div>
 
         @if ($errors->any())
-            <div class="mb-4 bg-red-500/10 border border-red-500/40 text-red-200 rounded-lg p-3">
+            <div data-inline-notification class="mb-4 bg-red-500/10 border border-red-500/40 text-red-200 rounded-lg p-3">
                 <ul class="list-disc list-inside">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -46,9 +38,16 @@
                         <label class="label">Thời lượng (phút) *</label>
                         <input type="number" name="duration" value="{{ old('duration') }}" class="input" required>
                     </div>
+                    @include('admin.movies._genre-picker')
                     <div>
-                        <label class="label">Thể loại</label>
-                        <input name="genre" value="{{ old('genre') }}" class="input" placeholder="Hành động, Khoa học viễn tưởng...">
+                        <label class="label" for="age-rating">Độ tuổi *</label>
+                        <select id="age-rating" name="age_rating" class="input" required>
+                            <option value="P" {{ old('age_rating') === 'P' ? 'selected' : '' }}>P — Phổ biến cho mọi độ tuổi</option>
+                            <option value="K" {{ old('age_rating') === 'K' ? 'selected' : '' }}>K — Dưới 13 tuổi cần người giám hộ</option>
+                            <option value="T13" {{ old('age_rating', 'T13') === 'T13' ? 'selected' : '' }}>T13 — Từ đủ 13 tuổi</option>
+                            <option value="T16" {{ old('age_rating') === 'T16' ? 'selected' : '' }}>T16 — Từ đủ 16 tuổi</option>
+                            <option value="T18" {{ old('age_rating') === 'T18' ? 'selected' : '' }}>T18 — Từ đủ 18 tuổi</option>
+                        </select>
                     </div>
                     <div>
                         <label class="label">Ngày phát hành</label>
@@ -71,9 +70,12 @@
                         <input name="actors" value="{{ old('actors') }}" class="input" placeholder="Tên diễn viên, cách nhau bởi dấu phẩy">
                     </div>
                     <div>
-                        <label class="label">Trailer URL</label>
-                        <input name="trailer_url" value="{{ old('trailer_url') }}" class="input" placeholder="https://youtube.com/...">
-                        <p class="hint">Link Youtube/Vimeo, không cần upload video.</p>
+                        <label class="label">Trailer URL hoặc tệp video (tùy chọn)</label>
+                        <div class="trailer-source-row">
+                            <input name="trailer_url" value="{{ old('trailer_url') }}" class="input trailer-url-input" placeholder="https://youtube.com/..." aria-label="Đường dẫn trailer">
+                            <input type="file" name="trailer" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" class="admin-file-input" aria-label="Chọn tệp trailer">
+                        </div>
+                        <p class="hint">Hỗ trợ MP4, WebM hoặc MOV, tối đa 50MB. Tệp được ưu tiên nếu đồng thời nhập URL.</p>
                     </div>
                     <div>
                         <label class="label">Điểm đánh giá (0-5)</label>
@@ -89,17 +91,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="label">Poster</label>
-                        <div class="rounded-lg border border-slate-700 bg-[#0b1224] p-3">
-                            <input type="file" name="poster" accept="image/*" class="w-full text-sm text-slate-100">
-                            <p class="hint">Khuyến nghị 2:3, dung lượng &lt; 2MB.</p>
-                        </div>
+                        @include('admin.partials.image-upload', ['fieldName' => 'poster', 'fieldLabel' => 'Ảnh poster', 'storedPath' => null, 'storedUrl' => null, 'uploadHint' => 'Khuyến nghị 2:3, tối đa 2MB.', 'previewClass' => 'is-poster'])
                     </div>
                     <div>
                         <label class="label">Banner</label>
-                        <div class="rounded-lg border border-slate-700 bg-[#0b1224] p-3">
-                            <input type="file" name="banner" accept="image/*" class="w-full text-sm text-slate-100">
-                            <p class="hint">Khuyến nghị 16:9, dung lượng &lt; 4MB.</p>
-                        </div>
+                        @include('admin.partials.image-upload', ['fieldName' => 'banner', 'fieldLabel' => 'Ảnh banner', 'storedPath' => null, 'storedUrl' => null, 'uploadHint' => 'Khuyến nghị 16:9, tối đa 4MB.', 'previewClass' => 'is-banner'])
                     </div>
                 </div>
 

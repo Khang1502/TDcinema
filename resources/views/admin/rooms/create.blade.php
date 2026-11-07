@@ -1,19 +1,12 @@
-@extends('admin.layouts.app')
+﻿@extends('admin.layouts.app')
 
 @section('title', 'Quản lý phòng chiếu')
 
-@section('content')
-    <style>
-        .page-shell { color: #e5e7eb; font-family: 'Manrope','Inter',system-ui,sans-serif; }
-        .card { background: #0f172a; border: 1px solid #1f2937; border-radius: 16px; padding: 18px; }
-        .label { color: #cbd5e1; font-size: 13px; margin-bottom: 6px; display: block; font-weight: 600; }
-        .input { width: 100%; background: #0b1224; border: 1px solid #1f2937; border-radius: 10px; padding: 12px 14px; color: #e5e7eb; }
-        .input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
-        .btn-primary { background: #2563eb; color: #fff; padding: 10px 16px; border-radius: 10px; font-weight: 700; }
-        .btn-primary:hover { background: #1d4ed8; }
-        .btn-ghost { color: #cbd5e1; }
-    </style>
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/admin/rooms.css') }}">
+@endpush
 
+@section('content')
     <div class="page-shell max-w-4xl mx-auto">
         <div class="flex items-center justify-between mb-5">
             <div>
@@ -23,7 +16,7 @@
         </div>
 
         @if ($errors->any())
-            <div class="mb-4 bg-red-500/10 border border-red-500/40 text-red-200 rounded-lg p-3">
+            <div data-inline-notification class="mb-4 bg-red-500/10 border border-red-500/40 text-red-200 rounded-lg p-3">
                 <ul class="list-disc list-inside">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -47,11 +40,16 @@
                     </div>
                     <div>
                         <label class="label">Tên phòng *</label>
-                        <input name="name" value="{{ old('name') }}" class="input" required>
+                        <input name="name" value="{{ old('name') }}" class="input" required placeholder="Rạp 1, Rạp 2, Rạp 3...">
                     </div>
                     <div>
-                        <label class="label">Loại phòng</label>
-                        <input name="type" value="{{ old('type') }}" class="input" placeholder="2D, 3D, IMAX...">
+                        <label class="label" for="room-type">Loại phòng *</label>
+                        <select id="room-type" name="type" class="input" required>
+                            <option value="2D" {{ old('type', '2D') === '2D' ? 'selected' : '' }}>2D — Tiêu chuẩn</option>
+                            <option value="3D" {{ old('type') === '3D' ? 'selected' : '' }}>3D — Không gian 3 chiều</option>
+                            <option value="IMAX" {{ old('type') === 'IMAX' ? 'selected' : '' }}>IMAX — Màn hình IMAX</option>
+                            <option value="VIP" {{ old('type') === 'VIP' ? 'selected' : '' }}>VIP — Phòng cao cấp</option>
+                        </select>
                     </div>
                     <div>
                         <label class="label">Số ghế</label>

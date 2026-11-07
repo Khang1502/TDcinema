@@ -15,11 +15,12 @@ class Invoice extends Model
         'promotion_id',
         'total_amount',
         'invoice_code',
+        'membership_level_name', 'membership_discount', 'points_earned',
     ];
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function ticket()

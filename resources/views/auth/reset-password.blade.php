@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    @include('shared.notification-assets')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('shared.page-assets')
     <title>TD Cinema - Đặt lại mật khẩu</title>
+
     <style>
         :root {
             --primary: #359eff;
@@ -16,7 +19,7 @@
             margin: 0;
             min-height: 100vh;
             background: #0b192f;
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -76,7 +79,7 @@
 <body>
     <div class="card">
         <div class="logo">
-            <img src="{{ asset('assets/images/logo/logo.jpg') }}" alt="TD Cinema" style="height:46px;" onerror="this.style.display='none'">
+            <img src="{{ asset('assets/images/logo/logo-transparent.png') }}" alt="TD Cinema" style="width:120px;height:78px;object-fit:contain;transform:scale(1.25);filter:brightness(1.6) saturate(.9);" onerror="this.style.display='none'">
         </div>
         <h1>Đặt lại mật khẩu</h1>
         <div class="sub">Tạo mật khẩu mới để tiếp tục đặt vé cùng TD Cinema.</div>
@@ -104,5 +107,6 @@
             <button type="submit" class="btn">Cập nhật mật khẩu</button>
         </form>
     </div>
+@include('shared.notifications')
 </body>
 </html>

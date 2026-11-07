@@ -1,24 +1,11 @@
-@extends('admin.layouts.app')
+﻿@extends('admin.layouts.app')
 @section('title', 'Chi tiết vé #'.$ticket->id)
+
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/admin/tickets.css') }}">
+@endpush
 @section('content')
 <div class="text-slate-50 space-y-6 max-w-5xl mx-auto px-4">
-    <style>
-        .badge {
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .badge-success { background: #0b3c2d; color: #1acf64; border: 1px solid #0f6142; }
-        .badge-warning { background: #3b2a0a; color: #facc15; border: 1px solid #b45309; }
-        .badge-danger  { background: #3b0d0d; color: #f87171; border: 1px solid #b91c1c; }
-        .badge-muted   { background: #111827; color: #cbd5e1; border: 1px solid #1f2937; }
-        .badge-info    { background: #1e3a8a; color: #c7d2fe; border: 1px solid #2563eb; }
-    </style>
-
     <div class="flex items-center justify-between">
         <div>
             <p class="text-slate-400 text-sm">Mã vé #{{ $ticket->id }}</p>
@@ -36,11 +23,16 @@
 
     <div class="flex items-center justify-end gap-3">
         <div class="flex items-center gap-3">
+            @if(auth()->user()->hasAdminPermission('payments.manage'))
+            <a class="admin-action" href="{{ route('admin.payments.index', ['ticket_id'=>$ticket->id]) }}">@include('admin.partials.icon', ['name'=>'wallet', 'size'=>16]) Thanh toán của vé</a>
+            @endif
+            @if($ticket->status === 'confirmed' && $ticket->payment?->status === 'paid')
             <form method="POST" action="{{ route('admin.tickets.status', $ticket) }}">
                 @csrf
                 <input type="hidden" name="status" value="used">
                 <button class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg" {{ $ticket->status === 'used' ? 'disabled' : '' }}>Đánh dấu đã dùng</button>
             </form>
+            @endif
             @if($ticket->status !== 'cancelled' && $ticket->status !== 'used')
                 <form method="POST" action="{{ route('admin.tickets.status', $ticket) }}">
                     @csrf
@@ -51,13 +43,9 @@
         </div>
     </div>
 
-    @if (session('success'))
-        <div class="bg-emerald-500/10 border border-emerald-600 text-emerald-200 px-4 py-3 rounded-lg">
-            {{ session('success') }}
-        </div>
-    @endif
+    
     @if ($errors->any())
-        <div class="bg-red-500/10 border border-red-600 text-red-200 px-4 py-3 rounded-lg space-y-1">
+        <div data-inline-notification class="bg-red-500/10 border border-red-600 text-red-200 px-4 py-3 rounded-lg space-y-1">
             @foreach ($errors->all() as $error)
                 <div>{{ $error }}</div>
             @endforeach
@@ -191,3 +179,6 @@
     </div>
 </div>
 @endsection
+
+
+

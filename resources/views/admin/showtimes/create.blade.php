@@ -1,5 +1,13 @@
-@extends('admin.layouts.app')
+﻿@extends('admin.layouts.app')
 @section('title', 'Thêm suất chiếu')
+
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/admin/showtimes.css') }}">
+@endpush
+
+@push('scripts')
+    <script src="{{ asset('assets/js/admin/showtimes.js') }}" defer></script>
+@endpush
 
 @section('content')
 @php
@@ -14,7 +22,10 @@
 
 <div class="max-w-3xl mx-auto text-slate-50">
     <h1 class="text-2xl font-bold mb-4">Thêm suất chiếu mới</h1>
-    <form method="POST" action="{{ route('admin.showtimes.store') }}" class="space-y-4 bg-[#111a2f] border border-slate-800 rounded-xl p-6">
+    <form method="POST"
+          action="{{ route('admin.showtimes.store') }}"
+          class="space-y-4 bg-[#111a2f] border border-slate-800 rounded-xl p-6"
+          data-duration-map='@json($movies->pluck("duration", "id"))'>
         @csrf
         <div class="grid md:grid-cols-2 gap-4">
             <div>
@@ -31,7 +42,7 @@
                 <select name="room_id" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100">
                     @foreach ($rooms as $room)
                         <option value="{{ $room->id }}" @selected(old('room_id', $prefillRoom) == $room->id)>
-                            {{ $room->name }} ({{ $room->cinema->name ?? 'N/A' }})
+                            {{ $room->cinema->name ?? 'Chưa có rạp' }} · {{ $room->name }} · {{ $room->type }} · #{{ $room->id }}
                         </option>
                     @endforeach
                 </select>
@@ -67,15 +78,14 @@
         <div class="grid md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm text-slate-300 mb-1">Giá vé cơ bản</label>
-                <input type="number" name="base_price" value="{{ old('base_price', 0) }}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100" />
+                <input type="number" name="base_price" value="{{ old('base_price', 70000) }}" min="0" step="1000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100" />
                 @error('base_price') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm text-slate-300 mb-1">Trạng thái</label>
                 <select name="status" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100">
-                    <option value="">-- Chọn --</option>
-                    <option value="1" @selected(old('status', '1') === '1')>Open</option>
-                    <option value="0" @selected(old('status') === '0')>Closed</option>
+                    <option value="active" @selected(old('status', 'active') === 'active')>Đang mở bán</option>
+                    <option value="cancelled" @selected(old('status') === 'cancelled')>Đã hủy</option>
                 </select>
                 @error('status') <p class="text-red-400 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
@@ -88,36 +98,7 @@
     </form>
 </div>
 
-<script>
-    (() => {
-        const durationMap = @json($movies->pluck('duration', 'id'));
-        const movieSelect = document.querySelector('select[name="movie_id"]');
-        const startInput = document.querySelector('input[name="start_time"]');
-        const endInput = document.querySelector('input[name="end_time"]');
-        const bufferInput = document.querySelector('input[name="buffer_minutes"]');
-        const toggle = document.querySelector('#auto-end-time');
-
-        const pad = (v) => v.toString().padStart(2, '0');
-        const formatDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-
-        const recalc = () => {
-            if (!toggle.checked) return;
-            const duration = Number(durationMap[movieSelect?.value] || 0);
-            const buffer = Number(bufferInput?.value || 0);
-            if (!startInput?.value || !duration) return;
-            const start = new Date(startInput.value);
-            if (isNaN(start.getTime())) return;
-            const end = new Date(start.getTime() + (duration + buffer) * 60000);
-            endInput.value = formatDate(end);
-        };
-
-        movieSelect?.addEventListener('change', recalc);
-        startInput?.addEventListener('change', recalc);
-        bufferInput?.addEventListener('input', recalc);
-        toggle?.addEventListener('change', recalc);
-
-        // chạy 1 lần đầu để đồng bộ theo buffer mặc định
-        recalc();
-    })();
-</script>
 @endsection
+
+
+

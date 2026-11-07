@@ -55,6 +55,7 @@ class FoodItemController extends Controller
             'image' => ['nullable', 'image', 'max:2048'],
         ]);
 
+        unset($data['image']);
         if ($request->hasFile('image')) {
             /** @var UploadedFile $file */
             $file = $request->file('image');
@@ -81,17 +82,16 @@ class FoodItemController extends Controller
             'image' => ['nullable', 'image', 'max:2048'],
         ]);
 
+        $oldImage = $food->image;
+        unset($data['image']);
         if ($request->hasFile('image')) {
             /** @var UploadedFile $file */
             $file = $request->file('image');
-            // Xóa ảnh cũ nếu có
-            if ($food->image) {
-                Storage::disk('public')->delete($food->image);
-            }
             $data['image'] = $file->store('foods', 'public');
         }
 
         $food->update($data);
+        if ($oldImage !== $food->image) $this->deleteUnusedImage($oldImage);
 
         return redirect()->route('admin.foods.index')->with('success', 'Đã cập nhật dịch vụ/đồ ăn.');
     }
@@ -102,10 +102,15 @@ class FoodItemController extends Controller
             $food->update(['status' => 'unavailable']);
             return redirect()->route('admin.foods.index')->with('warning', 'Mục này đã có trong hóa đơn, hệ thống chỉ chuyển sang Ngừng cung cấp.');
         }
-        if ($food->image) {
-            Storage::disk('public')->delete($food->image);
-        }
+        $oldImage = $food->image;
         $food->delete();
+        $this->deleteUnusedImage($oldImage);
         return redirect()->route('admin.foods.index')->with('success', 'Đã xóa dịch vụ/đồ ăn.');
+    }
+    private function deleteUnusedImage(?string $path): void
+    {
+        if ($path && str_starts_with($path, 'foods/') && !FoodItem::where('image', $path)->exists()) {
+            Storage::disk('public')->delete($path);
+        }
     }
 }

@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             UsersSeeder::class,
             TicketsPaymentsSeeder::class,
             FoodAndPromotionsSeeder::class,
+            MembershipRewardsSeeder::class,
             ReviewsSeeder::class,
         ]);
     }
