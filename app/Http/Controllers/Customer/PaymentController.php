@@ -202,48 +202,6 @@ class PaymentController extends Controller
             ->with('error', $message.' Ghế và mã khuyến mãi của bạn vẫn được giữ trong thời gian còn lại.');
     }
 
-    public function momoReturn(Request $request): ViewContract
-    {
-        // TODO: xác thực chữ ký và cập nhật trạng thái đơn
-        $resultCode = $request->input('resultCode');
-        $message    = $request->input('message', 'Thanh toán thất bại.');
-        $success    = $resultCode == '0';
-
-        // Lấy thông tin bổ sung (extraData chứa showtime_id, seats, combo_total, promo_code)
-        $extraData = [];
-        parse_str($request->input('extraData', ''), $extraData);
-
-        $showtime   = null;
-        $selected   = collect();
-        $ticketTotal= 0;
-        $comboTotal = (float) ($extraData['combo_total'] ?? session('booking.combo_total', 0));
-
-        if (!empty($extraData['showtime_id'])) {
-            $showtime = Showtime::with(['movie', 'room.cinema'])->find($extraData['showtime_id']);
-        }
-
-        $selected = $this->bookingService->parseSeatCodes(
-            $extraData['seats'] ?? session('booking.seats', '')
-        );
-
-        if ($showtime) {
-            $ticketPrice = (float) ($showtime->base_price ?? 0);
-            $ticketTotal = $this->bookingService->calculateTicketTotal($showtime, $selected);
-        }
-
-        $grandTotal = $ticketTotal + $comboTotal;
-
-        return view('frontend.booking.confirm', [
-            'success'      => $success,
-            'message'      => $message,
-            'showtime'     => $showtime,
-            'selectedSeats'=> $selected,
-            'ticketTotal'  => $ticketTotal,
-            'comboTotal'   => $comboTotal,
-            'grandTotal'   => $grandTotal,
-        ]);
-    }
-
     public function momoIpn(Request $request): JsonResponse
     {
         // TODO: xác thực chữ ký, cập nhật order (invoice) sang paid/failed
