@@ -19,13 +19,17 @@ $groups = [
     ],
     'Rạp & đặt vé' => [
         ['movies.manage','admin.movies.index',[],'Phim','Thông tin, poster, trailer và trạng thái đang / sắp chiếu.','film'],
+        ['movies.manage','admin.monthly-movies.index',[],'Phim hay tháng','Chọn phim đang chiếu, điểm đánh giá và tiêu chí hiển thị.','trending-up'],
         ['movies.manage','admin.genres.index',[],'Thể loại phim','Danh sách thể loại, thứ tự, trạng thái và phim đang sử dụng.','tags'],
         ['cinemas.manage','admin.cinemas.index',[],'Hệ thống rạp','5 khu vực, địa chỉ, ảnh rạp, phòng và trạng thái.','building'],
         ['rooms.manage','admin.rooms.index',[],'Phòng chiếu','Định dạng phòng, sức chứa và tình trạng hoạt động.', 'projector'],
         ['showtimes.manage','admin.showtimes.index',[],'Suất chiếu','Ngày, giờ, phòng, giá vé và trạng thái suất chiếu.', 'calendar-clock'],
         ['showtimes.manage','admin.showtimes.schedule',[],'Lịch chiếu','Xem và sao chép lịch chiếu theo ngày.','calendar'],
         ['seats.manage','admin.seats.index',[],'Sơ đồ ghế','Bố trí ghế, lối đi, loại ghế và phụ thu.','seat'],
-        ['tickets.manage','admin.tickets.index',[],'Vé & check-in','Tra cứu vé, mã QR và quản lý trạng thái.','ticket'],
+    ],
+    'Vé & check-in' => [
+        ['tickets.manage','admin.tickets.index',[],'Quản lý vé','Tra cứu lượt đặt và check-in cả lượt.','ticket'],
+        ['food-sales.manage','admin.food-orders.index',[],'Quản lý bắp nước','Đơn online và tại quầy, check-in từng combo hoặc cả lượt.','bag'],
     ],
     'Ưu đãi & dịch vụ' => [
         ['promotions.manage','admin.promotions.index',[],'Khuyến mãi','Mã, mức giảm, ảnh, thời hạn và lượt sử dụng.', 'tags'],

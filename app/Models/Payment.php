@@ -11,6 +11,7 @@ class Payment extends Model
 
     protected $fillable = [
         'ticket_id',
+        'food_order_id',
         'amount',
         'method',
         'status',
@@ -24,6 +25,11 @@ class Payment extends Model
     public function ticket()
     {
         return $this->belongsTo(Ticket::class);
+    }
+
+    public function foodOrder()
+    {
+        return $this->belongsTo(FoodOrder::class);
     }
 }
 

@@ -1,59 +1,54 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TD Cinema
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Ứng dụng đặt vé và quản lý rạp chiếu phim xây dựng bằng Laravel 12. Khách có thể xem phim, chọn suất, giữ ghế, đặt vé và bắp nước; nhân viên quản lý bán tại quầy, check-in và báo cáo.
 
-## About Laravel
+## Chức năng chính
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Trang khách: phim đang chiếu/sắp chiếu, Phim hay tháng, rạp và suất chiếu, ưu đãi, thành viên, lịch sử vé và mã check-in.
+- Đặt vé: tối đa 8 ghế mỗi lượt, tối đa 10 phần cho mỗi sản phẩm bắp nước. Các ghế cùng lượt dùng chung mã check-in; đơn bắp nước có mã nhận riêng.
+- Vé & check-in: quản lý vé và bắp nước online/tại quầy, bán tại quầy, check-in cả lượt vé, giao từng phần hoặc toàn bộ đơn bắp nước.
+- Quản trị: phim, thể loại, rạp, phòng, ghế, suất chiếu, Phim hay tháng, ưu đãi, phương thức thanh toán, lịch sử thanh toán, báo cáo, tài khoản/quyền và nội dung website.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Yêu cầu môi trường
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.2 trở lên cùng các extension theo `composer check-platform-reqs`
+- Composer, Node.js và npm
+- Database được cấu hình trong `.env` (file mẫu dùng SQLite; có thể cấu hình MySQL)
 
-## Learning Laravel
+## Cài đặt trên Windows PowerShell
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```powershell
+cd D:\TDcinema
+composer install
+npm.cmd ci
+Copy-Item .env.example .env
+php artisan key:generate
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Chỉnh `APP_URL` và các biến `DB_*` trong `.env` theo máy. Nếu dùng SQLite, tạo file `database/database.sqlite` trước khi migrate. Với database đã có dữ liệu, sao lưu và kiểm tra trạng thái migration trước khi chạy tiếp; không tạo lại `APP_KEY` của bản đang dùng.
 
-## Laravel Sponsors
+```powershell
+php artisan migrate:status
+php artisan migrate
+php artisan storage:link
+npm.cmd run build
+php artisan serve --host=127.0.0.1 --port=8765
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Mở `http://127.0.0.1:8765/`. Nếu cổng 8765 đang được dùng, chọn cổng khác và cập nhật `APP_URL`. Để phát triển giao diện, chạy `npm.cmd run dev` trong một terminal khác.
 
-### Premium Partners
+## Kiểm tra
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```powershell
+php artisan test
+npm.cmd run build
+```
 
-## Contributing
+Bộ test dùng cấu hình riêng trong `phpunit.xml`; kết quả test không thay thế việc kiểm tra migration và thanh toán trên database/môi trường vận hành. Seeder có thể thay đổi dữ liệu mẫu, vì vậy cần xem nội dung seeder trước khi chạy trên database đang sử dụng.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Tài liệu
 
-## Code of Conduct
+- [Bán vé và bắp nước tại quầy](docs/counter-sales.md)
+- [Nguồn ảnh phương thức thanh toán](docs/payment-method-logos.md)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+`.env`, dependency, file build, log, cache và file tải lên trong `storage` được loại khỏi Git. Mã nguồn không chứa dữ liệu khách hàng hoặc khóa truy cập của môi trường chạy.

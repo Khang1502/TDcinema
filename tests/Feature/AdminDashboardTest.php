@@ -146,6 +146,6 @@ class AdminDashboardTest extends TestCase
         $xpath=new \DOMXPath($dom);
         $nodes=$xpath->query('//div[contains(@class,"sidebar-group")][p[text()="Giao diện và nội dung"]]/a');
         $routes=[]; foreach($nodes as $node) $routes[]=$node->getAttribute('href');
-        $this->assertSame(array_map(fn ($route)=>route($route),['admin.header.edit','admin.banners.index','admin.footer.edit','admin.movies.index','admin.genres.index']),array_slice($routes,0,5));
+        $this->assertSame(array_map(fn ($route)=>route($route),['admin.header.edit','admin.banners.index','admin.footer.edit','admin.movies.index','admin.monthly-movies.index','admin.genres.index']),array_slice($routes,0,6));
     }
 }

@@ -12,8 +12,20 @@ class FoodOrderItem extends Model
         'food_order_id',
         'food_item_id',
         'quantity',
+        'fulfilled_quantity',
+        'fulfilled_at',
         'price',
     ];
+
+    protected function casts(): array
+    {
+        return ['fulfilled_quantity' => 'integer', 'fulfilled_at' => 'datetime'];
+    }
+
+    public function remainingQuantity(): int
+    {
+        return max(0, (int) $this->quantity - (int) $this->fulfilled_quantity);
+    }
 
     public function order()
     {

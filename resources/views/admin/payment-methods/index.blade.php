@@ -3,9 +3,9 @@
 @include('admin.payment-methods._assets')
 @section('content')
 <div class="ad-page payment-page">
-    <header class="ad-heading"><div><span class="ad-kicker">TD CINEMA · CẤU HÌNH THANH TOÁN</span><h1>Phương thức thanh toán</h1><p>Điều chỉnh nội dung và những lựa chọn thanh toán khách hàng có thể sử dụng.</p></div>@if(auth()->user()->hasAdminPermission('payments.manage'))<a class="ad-button" href="{{ route('admin.payments.index') }}">@include('admin.partials.icon', ['name'=>'wallet', 'size'=>17]) Giao dịch thanh toán</a>@endif</header>
+    <header class="ad-heading"><div><span class="ad-kicker">TD CINEMA · CẤU HÌNH THANH TOÁN</span><h1>Phương thức thanh toán</h1><p>Điều chỉnh nội dung và những lựa chọn thanh toán khách hàng có thể sử dụng.</p></div><div class="ad-actions">@if(auth()->user()->hasAdminPermission('payments.manage'))<a class="ad-button" href="{{ route('admin.payments.index') }}">@include('admin.partials.icon', ['name'=>'wallet', 'size'=>17]) Lịch sử thanh toán</a>@endif<a class="ad-button primary" href="{{ route('admin.payment-methods.create') }}">@include('admin.partials.icon', ['name'=>'plus', 'size'=>17]) Thêm phương thức</a></div></header>
     <div class="pm-overview"><span><i class="pm-dot"></i><strong>{{ $methods->where('is_online', true)->where('is_enabled', true)->count() }}</strong> phương thức trực tuyến đang bật</span><span>{{ $methods->where('is_online', true)->where('is_enabled', false)->count() }} đang tạm dừng</span><span>{{ $methods->where('is_online', false)->count() }} phương thức tại quầy</span></div>
-    <aside class="pm-notice">@include('admin.partials.icon', ['name'=>'info', 'size'=>19])<p>Thứ tự nhỏ hiển thị trước tại bước thanh toán. Tạm dừng sẽ ngừng nhận lượt thanh toán mới; lịch sử giao dịch vẫn được giữ.</p></aside>
+    <aside class="pm-notice">@include('admin.partials.icon', ['name'=>'info', 'size'=>19])<p>Thứ tự nhỏ hiển thị trước tại bước thanh toán. Phương thức tạo mới dùng luồng mô phỏng và ở trạng thái tạm dừng cho đến khi bạn bật.</p></aside>
 
     @foreach([true=>'Thanh toán trực tuyến', false=>'Thanh toán tại quầy'] as $online=>$heading)
     <section class="pm-section" aria-label="{{ $heading }}">
@@ -13,7 +13,7 @@
         <div class="pm-grid">
             @foreach($methods->where('is_online', (bool)$online) as $method)
             <article class="pm-card {{ !$method->is_enabled ? 'is-paused' : '' }}">
-                <div class="pm-card-heading"><span class="pm-brand" data-method="{{ $method->code }}" aria-hidden="true">{{ $method->monogram() }}</span><div><h3>{{ $method->name }}</h3><code>{{ $method->code }}</code></div><span class="ad-badge {{ $method->is_enabled ? 'success' : 'warning' }}">{{ $method->is_enabled ? 'Đang bật' : 'Tạm dừng' }}</span></div>
+                <div class="pm-card-heading"><span class="pm-brand" data-method="{{ $method->code }}" aria-hidden="true">@if($method->logoUrl())<img src="{{ $method->logoUrl() }}" alt="" loading="lazy" width="120" height="72">@else{{ $method->monogram() }}@endif</span><div><h3>{{ $method->name }}</h3><code>{{ $method->code }}</code></div><span class="ad-badge {{ $method->is_enabled ? 'success' : 'warning' }}">{{ $method->is_enabled ? 'Đang bật' : 'Tạm dừng' }}</span></div>
                 <p class="pm-description">{{ $method->description ?: 'Chưa có mô tả. Bạn có thể bổ sung khi chỉnh sửa.' }}</p>
                 <div class="pm-meta"><span class="ad-badge {{ $method->isDemo() ? 'purple' : '' }}">{{ !$method->is_online ? 'Tại quầy' : ($method->isDemo() ? 'Mô phỏng' : 'Cổng MoMo') }}</span>@if($method->badge)<span class="ad-badge">{{ $method->badge }}</span>@endif<span class="pm-order">Thứ tự {{ $method->sort_order }}</span></div>
                 @if($method->instructions)<p class="pm-instructions">{{ \Illuminate\Support\Str::limit($method->instructions, 140) }}</p>@endif

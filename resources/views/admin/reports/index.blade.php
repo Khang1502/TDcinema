@@ -74,6 +74,9 @@
             <div><span>Giao dịch thất bại</span><strong>{{ $number($summary['failed_transactions']) }}</strong></div>
             <div><span>Đơn combo hoàn tất</span><strong>{{ $number($summary['combo_orders']) }}</strong></div>
             <div><span>Giá trị combo trước giảm</span><strong>{{ $money($summary['combo_value']) }}</strong></div>
+            <div><span>Đơn bắp nước độc lập</span><strong>{{ $number($summary['food_orders']) }}</strong></div>
+            <div><span>Doanh thu bắp nước độc lập</span><strong>{{ $money($summary['food_revenue']) }}</strong></div>
+            <div><span>Tổng doanh thu vé và bắp nước</span><strong>{{ $money($summary['total_revenue']) }}</strong></div>
         </div>
     </section>
     <div class="report-overview-grid">

@@ -6,20 +6,56 @@
         const previous = carousel.querySelector('[data-offer-prev]');
         const next = carousel.querySelector('[data-offer-next]');
         const count = carousel.querySelector('[data-offer-count]');
-        const toggle = carousel.querySelector('[data-offer-toggle]');
+        const bannerLoop = carousel.dataset.mode === 'banner' && cards.length > 1;
+        if (bannerLoop) {
+            const before = cards.at(-1).cloneNode(true);
+            const after = cards[0].cloneNode(true);
+            [before, after].forEach(clone => {
+                clone.setAttribute('aria-hidden', 'true');
+                clone.inert = true;
+                clone.querySelectorAll('img').forEach(image => { image.loading = 'eager'; });
+            });
+            track.prepend(before);
+            track.append(after);
+        }
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const autoplay = carousel.dataset.autoplay === '1';
+        const autoplay = bannerLoop || carousel.dataset.autoplay === '1';
         const interval = Math.min(20000, Math.max(3000, Number(carousel.dataset.interval) || 5000));
-        let paused = false, hovered = false, dragging = false, visible = false, autoTimer;
-        let frame;
-        const canRun = () => autoplay && !paused && !hovered && !dragging && visible && !document.hidden &&
-            !reducedMotion.matches && !carousel.querySelector(':focus:not([data-offer-toggle])') && track.scrollWidth - track.clientWidth > 2;
+        let hovered = false, dragging = false, visible = false, autoTimer, settleTimer, frame;
+        let activeBannerIndex = 0;
+        const step = () => (cards[0]?.getBoundingClientRect().width || track.clientWidth)
+            + (parseFloat(getComputedStyle(track).columnGap) || 0);
+        const jumpTo = position => {
+            track.style.scrollBehavior = 'auto';
+            track.style.scrollSnapType = 'none';
+            track.scrollLeft = position * step();
+            track.style.scrollSnapType = '';
+            track.style.scrollBehavior = '';
+        };
+        const normalizeLoop = () => {
+            if (!bannerLoop) return;
+            const width = step();
+            if (Math.abs(track.scrollLeft) <= 2) jumpTo(cards.length);
+            else if (Math.abs(track.scrollLeft - (cards.length + 1) * width) <= 2) jumpTo(1);
+        };
+        const canRun = () => autoplay && !hovered && !dragging && visible && !document.hidden &&
+            !reducedMotion.matches && !track.contains(document.activeElement) && track.scrollWidth - track.clientWidth > 2;
+        const move = (direction, automatic = false) => {
+            if (bannerLoop) {
+                normalizeLoop();
+                const position = Math.round(track.scrollLeft / step()) + direction;
+                track.scrollTo({ left: position * step(), behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+                return;
+            }
+            const visibleCards = automatic ? 1 : Math.max(1, Math.floor(track.clientWidth / step()));
+            track.scrollBy({ left: direction * step() * visibleCards, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+        };
         const restart = () => {
             clearTimeout(autoTimer);
             if (!canRun()) return;
             autoTimer = setTimeout(() => {
                 if (!canRun()) return;
-                if (track.scrollLeft >= track.scrollWidth - track.clientWidth - 2) {
+                if (!bannerLoop && track.scrollLeft >= track.scrollWidth - track.clientWidth - 2) {
                     track.scrollTo({ left: 0, behavior: 'smooth' });
                 } else {
                     move(1, true);
@@ -31,42 +67,35 @@
         const update = () => {
             const overflow = track.scrollWidth - track.clientWidth > 2;
             controls.hidden = !overflow;
-            if (toggle) toggle.hidden = !autoplay || !overflow || reducedMotion.matches;
             if (!overflow) clearTimeout(autoTimer);
-            previous.disabled = track.scrollLeft <= 2;
-            next.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 2;
+            previous.disabled = !bannerLoop && track.scrollLeft <= 2;
+            next.disabled = !bannerLoop && track.scrollLeft >= track.scrollWidth - track.clientWidth - 2;
+            if (bannerLoop) {
+                activeBannerIndex = (Math.round(track.scrollLeft / step()) + cards.length - 1) % cards.length;
+                count.textContent = `${activeBannerIndex + 1} / ${cards.length} ưu đãi`;
+                const upcomingImage = cards[(activeBannerIndex + 1) % cards.length]?.querySelector('img');
+                if (upcomingImage) upcomingImage.loading = 'eager';
+                return;
+            }
             const bounds = track.getBoundingClientRect();
-            const visible = cards.map((card, index) => {
+            const visibleCards = cards.map((card, index) => {
                 const rect = card.getBoundingClientRect();
                 const overlap = Math.min(rect.right, bounds.right) - Math.max(rect.left, bounds.left);
                 return overlap >= rect.width / 2 ? index + 1 : null;
             }).filter(Boolean);
             // Load the next image before it scrolls into view.
-            const upcomingImage = cards[(visible.at(-1) || 1) % cards.length]?.querySelector('img');
+            const upcomingImage = cards[(visibleCards.at(-1) || 1) % cards.length]?.querySelector('img');
             if (upcomingImage) upcomingImage.loading = 'eager';
-            if (visible.length) {
-                count.textContent = `${visible[0]}${visible.length > 1 ? '–' + visible.at(-1) : ''} / ${cards.length} ưu đãi`;
+            if (visibleCards.length) {
+                count.textContent = `${visibleCards[0]}${visibleCards.length > 1 ? '–' + visibleCards.at(-1) : ''} / ${cards.length} ưu đãi`;
             }
         };
         const scheduleUpdate = () => {
             cancelAnimationFrame(frame);
             frame = requestAnimationFrame(update);
         };
-        const move = (direction, automatic = false) => {
-            const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
-            const step = (cards[0]?.getBoundingClientRect().width || track.clientWidth) + gap;
-            const visibleCards = automatic ? 1 : Math.max(1, Math.floor((track.clientWidth + gap) / step));
-            track.scrollBy({ left: direction * step * visibleCards, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
-        };
         previous.addEventListener('click', () => { move(-1); restart(); });
         next.addEventListener('click', () => { move(1); restart(); });
-        toggle?.addEventListener('click', () => {
-            paused = !paused;
-            toggle.setAttribute('aria-label', paused ? 'Tiếp tục tự chạy' : 'Tạm dừng tự chạy');
-            toggle.setAttribute('aria-pressed', String(paused));
-            toggle.querySelector('path').setAttribute('d', paused ? 'M7 4l9 6-9 6V4Z' : 'M7 5v10M13 5v10');
-            restart();
-        });
         carousel.addEventListener('mouseenter', () => { hovered = true; restart(); });
         carousel.addEventListener('mouseleave', () => { hovered = false; restart(); });
         carousel.addEventListener('focusin', restart);
@@ -77,7 +106,14 @@
         document.addEventListener('visibilitychange', restart);
         reducedMotion.addEventListener('change', () => { update(); restart(); });
         new IntersectionObserver(entries => { visible = entries[0].isIntersecting; restart(); }, { threshold: 0.25 }).observe(carousel);
-        track.addEventListener('scroll', scheduleUpdate, { passive: true });
+        track.addEventListener('scroll', () => {
+            scheduleUpdate();
+            if (bannerLoop) {
+                clearTimeout(settleTimer);
+                settleTimer = setTimeout(() => { normalizeLoop(); scheduleUpdate(); }, 180);
+            }
+        }, { passive: true });
+        if (bannerLoop) track.addEventListener('scrollend', () => { normalizeLoop(); scheduleUpdate(); });
         track.addEventListener('keydown', event => {
             if (event.target !== track) return;
             if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
@@ -85,12 +121,53 @@
                 move(event.key === 'ArrowRight' ? 1 : -1);
             } else if (event.key === 'Home' || event.key === 'End') {
                 event.preventDefault();
-                track.scrollTo({ left: event.key === 'Home' ? 0 : track.scrollWidth, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+                if (bannerLoop) jumpTo(event.key === 'Home' ? 1 : cards.length);
+                else track.scrollTo({ left: event.key === 'Home' ? 0 : track.scrollWidth, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
             }
         });
-        new ResizeObserver(() => { scheduleUpdate(); restart(); }).observe(track);
+        new ResizeObserver(() => {
+            if (bannerLoop) jumpTo(activeBannerIndex + 1);
+            scheduleUpdate();
+            restart();
+        }).observe(track);
         document.fonts.ready.then(scheduleUpdate);
+        if (bannerLoop) jumpTo(1);
         update();
+    });
+
+    document.querySelectorAll('form[data-promo-select-guest]').forEach(form => {
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            if (button?.disabled) return;
+            if (button) button.disabled = true;
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: { Accept: 'application/json' },
+                    credentials: 'same-origin',
+                });
+                if (response.redirected) {
+                    window.location.assign(response.url);
+                    return;
+                }
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(Object.values(result.errors || {})[0]?.[0] || result.message || 'Không thể chọn ưu đãi. Vui lòng thử lại.');
+                }
+                if (result.requires_login) {
+                    window.AuthModal.open('login');
+                    window.TDNotify.warning(result.message);
+                    document.querySelector('#loginBox input[name="email"]')?.focus();
+                }
+            } catch (error) {
+                window.TDNotify.error(error.message || 'Không thể chọn ưu đãi. Vui lòng thử lại.');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        });
     });
 
     let timer;

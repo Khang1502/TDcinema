@@ -28,7 +28,6 @@
                                     <div class="mega-info">
                                         <div class="mega-title">{{ $movie->title }}</div>
                                         <div class="mega-meta">{{ $movie->genre ?? 'Đang cập nhật' }}</div>
-                                        @if($movie->rating_avg)<div class="mega-rating">★ {{ number_format($movie->rating_avg, 1) }}</div>@endif
                                     </div>
                                 </a>
                             @empty

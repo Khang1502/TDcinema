@@ -9,34 +9,31 @@
 .pm-section-heading { display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:17px; }
 .pm-section-heading h2 { font-size:17px; font-weight:750; color:#e0efff; margin:0; }
 .pm-section-heading > span { color:#7195b8; font-size:11px; }
-.pm-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
-.pm-card { display:flex; flex-direction:column; padding:22px; border:1px solid #2b4661; border-radius:14px; background:#102137; min-width:0; }
+.pm-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:13px; }
+.pm-card { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; column-gap:24px; padding:21px 24px; border:1px solid #2b4661; border-radius:14px; background:#102137; min-width:0; }
 .pm-card.is-paused { background:#0c1b2e; border-style:dashed; }
-.pm-card-heading { display:flex; align-items:center; gap:13px; }
+.pm-card-heading { display:flex; align-items:center; gap:18px; min-width:0; }
 .pm-card-heading > div { flex:1; min-width:0; }
 .pm-card-heading h3 { font-size:18px; line-height:1.6; font-weight:750; color:#e7f2ff; margin:0; overflow-wrap:anywhere; }
 .pm-card-heading code { color:#7f9bbd; font-size:10px; }
 .pm-card-heading > .ad-badge { flex:none; }
-.pm-brand { display:grid; place-items:center; flex:none; width:49px; height:49px; border:1px solid #405979; border-radius:13px; color:#cbdefc; background:#233c62; font-size:15px; font-weight:800; letter-spacing:-.5px; }
-.pm-brand[data-method=momo] { background:#611847; border-color:#99346d; color:#ffc4e6; }
-.pm-brand[data-method=shopeepay] { background:#592b28; border-color:#8a4b37; color:#ffd0af; }
-.pm-brand[data-method=zalopay] { background:#143e61; border-color:#2d6a99; color:#a3dbff; }
-.pm-brand[data-method=fundiin] { background:#1d4a4a; border-color:#347879; color:#a2f0e3; }
-.pm-brand[data-method=cash] { background:#234a3d; border-color:#3e7560; color:#b1e9bf; }
-.pm-brand[data-method=payoo] { background:#384224; border-color:#5b6d34; color:#deedb1; }
-.pm-brand[data-method=vnpay] { background:#293556; border-color:#53658d; color:#c5d7ff; }
-.pm-description { color:#8eacca; font-size:12px; line-height:1.9; margin:19px 0; overflow-wrap:anywhere; }
-.pm-meta { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.pm-brand { display:grid; place-items:center; flex:none; width:120px; height:72px; padding:10px; border:1px solid #d9e3ee; border-radius:12px; color:#244463; background:#fff; font-size:20px; font-weight:800; letter-spacing:-.5px; }
+.pm-brand img { display:block; width:100%; height:100%; object-fit:contain; }
+.pm-description { color:#8eacca; font-size:12px; line-height:1.8; margin:9px 0 3px 138px; overflow-wrap:anywhere; }
+.pm-meta { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-left:138px; }
 .pm-order { margin-left:auto; color:#7799b8; font-size:10px; }
-.pm-instructions { padding:12px 14px; border-left:2px solid #3d6383; background:#0c1b2e; color:#7f9fbe; font-size:11px; line-height:1.9; white-space:pre-line; overflow-wrap:anywhere; margin:17px 0 0; }
-.pm-card-actions { display:flex; flex-wrap:wrap; gap:9px; margin-top:auto; padding-top:21px; }
+.pm-instructions { padding:10px 12px; border-left:2px solid #3d6383; background:#0c1b2e; color:#7f9fbe; font-size:11px; line-height:1.8; white-space:pre-line; overflow-wrap:anywhere; margin:12px 0 0 138px; }
+.pm-card-actions { grid-column:2; grid-row:1 / span 4; display:flex; flex-direction:column; gap:9px; min-width:140px; }
+.pm-card-actions .ad-button { width:100%; }
 .pm-card-actions form { margin:0; }
 .pm-editor-grid { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(270px,1fr); gap:24px; align-items:start; }
 .pm-editor { display:grid; gap:22px; }
+.pm-create { max-width:900px; }
 .pm-editor .pay-card-heading { margin:0; }
 .pm-editor .pay-field > span b { color:#ff9a83; }
 .pm-editor .pay-field small { display:block; margin-top:7px; color:#7898b9; font-size:10px; line-height:1.8; }
 .pm-editor textarea { width:100%; min-width:0; resize:vertical; min-height:96px; border:1px solid #2d4964; border-radius:8px; padding:12px; font:12px/1.9 var(--font-vietnamese); }
+.pm-editor input[type=file] { width:100%; padding:10px; border:1px dashed #446584; border-radius:8px; background:#10273d; color:#b5cde6; }
 .pm-editor-row { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:18px; }
 .pm-enabled { display:flex; align-items:flex-start; gap:12px; padding:17px; border:1px solid #31516b; background:#152d42; border-radius:10px; cursor:pointer; }
 .pm-enabled input[type=checkbox] { flex:none; width:18px; height:18px; margin-top:2px; accent-color:#ff7154; }
@@ -46,5 +43,5 @@
 .pm-context h2 { color:#e3f0ff; font-size:21px; font-weight:750; line-height:1.8; margin:18px 0 0; overflow-wrap:anywhere; }
 .pm-context p { color:#87a6c5; font-size:11px; line-height:2; margin:16px 0 0; }
 .pm-field-error { color:#eaa193!important; }
-@container directory (max-width:850px) { .pm-editor-grid { grid-template-columns:1fr; } }
-@container directory (max-width:650px) { .pm-grid { grid-template-columns:1fr; }.pm-card { padding:18px; }.pm-card-heading h3 { font-size:17px; }.pm-brand { width:43px; height:43px; }.pm-section-heading h2 { font-size:15px; }.pm-editor-row { grid-template-columns:1fr; }.pm-overview { gap:13px; padding:16px; }.pm-context .pay-summary-list { grid-template-columns:1fr; } }
+@container directory (max-width:850px) { .pm-editor-grid { grid-template-columns:1fr; }.pm-card { grid-template-columns:1fr; row-gap:8px; }.pm-card-actions { grid-column:1; grid-row:auto; flex-direction:row; justify-content:flex-end; min-width:0; margin-top:6px; }.pm-card-actions .ad-button { width:auto; } }
+@container directory (max-width:650px) { .pm-card { padding:18px; }.pm-card-heading { gap:12px; flex-wrap:wrap; }.pm-card-heading h3 { font-size:17px; }.pm-card-heading > .ad-badge { margin-left:auto; }.pm-brand { width:86px; height:58px; }.pm-description,.pm-meta,.pm-instructions { margin-left:0; }.pm-section-heading h2 { font-size:15px; }.pm-editor-row { grid-template-columns:1fr; }.pm-overview { gap:13px; padding:16px; }.pm-context .pay-summary-list { grid-template-columns:1fr; }.pm-card-actions { justify-content:flex-start; flex-wrap:wrap; } }

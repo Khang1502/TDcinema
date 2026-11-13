@@ -9,7 +9,10 @@
     <link rel="stylesheet" href="{{ asset('assets/css/frontend/promotions.css') }}?v={{ filemtime(public_path('assets/css/frontend/promotions.css')) }}">
     @include('frontend.partials.header-assets')
 </head>
-<body>
+<body data-login-error="{{ $errors->has('email') && !session('reset_error') ? '1' : '0' }}"
+      data-reset-error="{{ session('reset_error') ? '1' : '0' }}"
+      data-reset-sent="{{ session('reset_sent') ? '1' : '0' }}"
+      data-reset-email="{{ session('reset_email') }}">
 <div class="page">
     @include('frontend.partials.header', ['searchId' => 'promotions-movie-search'])
     <main class="offers-page">

@@ -24,6 +24,7 @@ class MovieScheduleService
         return DB::transaction(function () use ($days) {
             $result = $this->removeUpcoming();
             $result['created'] = 0;
+            $createdIds = [];
             $result['missing'] = [];
             $now = now();
             $rooms = Room::where('status', 'active')->whereHas('cinema', fn ($q) => $q->where('status', 'active'))
@@ -69,6 +70,7 @@ class MovieScheduleService
                                 $price = match(strtoupper($room->type)) { 'IMAX' => 110000, 'VIP' => 130000, '3D' => 100000, default => 80000 };
                                 $show = Showtime::create(['movie_id'=>$movie->id, 'room_id'=>$room->id, 'start_time'=>$start,
                                     'end_time'=>$end, 'base_price'=>$price, 'status'=>'active', 'source'=>'local_schedule']);
+                                $createdIds[] = $show->id;
                                 $occupied[$room->id][] = ['start'=>$startStamp, 'end'=>$endStamp];
                                 $coverage[$key] = true;
                                 $result['created']++;
@@ -94,7 +96,7 @@ class MovieScheduleService
                 $counts = $daily->countBy('movie_id')->all();
                 foreach ($movies as $movie) {
                     if (($counts[$movie->id] ?? 0)>0) continue;
-                    $candidate = $daily->first(fn ($show) => $show->source === 'local_schedule' && $show->tickets_count===0
+                    $candidate = $daily->first(fn ($show) => in_array($show->id, $createdIds, true) && $show->tickets_count===0
                         && ($counts[$show->movie_id] ?? 0)>1 && $show->end_time->timestamp-$show->start_time->timestamp >= max(30,(int)$movie->duration)*60);
                     if (!$candidate) { $result['missing'][]=$movie->id.'|'.$date->toDateString(); continue; }
                     $counts[$candidate->movie_id]--;

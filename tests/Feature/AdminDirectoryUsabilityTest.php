@@ -15,8 +15,8 @@ class AdminDirectoryUsabilityTest extends TestCase
         $cinema = Cinema::create(['name'=>'Rạp kiểm thử','address'=>'Test','city'=>'HCM','status'=>'active']);
         $room = Room::create(['cinema_id'=>$cinema->id,'name'=>'Rạp 1','type'=>'2D']);
         $movie = Movie::create(['title'=>'Phim kiểm thử','duration'=>120,'status'=>'now_showing']);
-        $show = Showtime::create(['movie_id'=>$movie->id,'room_id'=>$room->id,'start_time'=>today()->addHours(9),
-            'end_time'=>today()->addHours(11),'base_price'=>100000,'status'=>'active']);
+        $show = Showtime::create(['movie_id'=>$movie->id,'room_id'=>$room->id,'start_time'=>now()->addDay()->startOfDay()->addHours(9),
+            'end_time'=>now()->addDay()->startOfDay()->addHours(11),'base_price'=>100000,'status'=>'active']);
         $user = User::factory()->create(['name'=>'Người cần tìm','phone'=>'0901112223']);
         return compact('cinema','room','movie','show','user');
     }
@@ -29,28 +29,29 @@ class AdminDirectoryUsabilityTest extends TestCase
         return $ticket;
     }
 
-    public function test_ticket_lookup_phone_and_id_keep_bulk_checkin_within_the_displayed_filters(): void
+    public function test_ticket_lookup_phone_and_id_keep_booking_checkin_within_the_selected_booking(): void
     {
         $fixture = $this->fixture(); $one = $this->ticket($fixture,1); $two = $this->ticket($fixture,2);
         $unpaid = $this->ticket($fixture,3,payment:null); $used = $this->ticket($fixture,4,'used');
         $this->actingAs(User::factory()->create(['role'=>'staff']))->get(route('admin.tickets.index',['q'=>'090111']))
-            ->assertOk()->assertViewHas('tickets',fn ($items)=>$items->total()===4)->assertViewHas('readyCount',2)
+            ->assertOk()->assertViewHas('tickets',fn ($items)=>$items->total()===4)
             ->assertViewHas('counts',fn ($counts)=>$counts['ready']===2 && $counts['used']===1);
         $this->get(route('admin.tickets.index',['q'=>'#'.$one->id]))->assertViewHas('tickets',fn ($items)=>$items->pluck('id')->all()===[$one->id])
             ->assertSee('70.000')->assertSee('Giá trị thanh toán');
-        $this->post(route('admin.tickets.bulk-checkin'),['q'=>'#'.$one->id])->assertSessionHas('success');
+        $this->post(route('admin.tickets.booking-checkin',$one))->assertSessionHas('success');
         $this->assertSame('used',$one->fresh()->status); $this->assertSame('confirmed',$two->fresh()->status);
         $this->assertSame('confirmed',$unpaid->fresh()->status); $this->assertSame('used',$used->fresh()->status);
-        $this->post(route('admin.tickets.bulk-checkin'),['q'=>'#'.$one->id])->assertSessionHas('error');
+        $this->post(route('admin.tickets.booking-checkin',$one))->assertSessionHasErrors('status');
     }
 
-    public function test_ticket_counts_and_bulk_operations_cover_all_filtered_pages_and_invalid_dates_are_rejected(): void
+    public function test_ticket_counts_cover_all_filtered_pages_and_invalid_dates_are_rejected(): void
     {
         $fixture = $this->fixture(); foreach(range(1,17) as $number) $this->ticket($fixture,$number);
         $this->actingAs(User::factory()->create(['role'=>'admin']))->get(route('admin.tickets.index',['movie_id'=>$fixture['movie']->id,'status'=>'confirmed','payment_status'=>'paid','page'=>2]))
-            ->assertViewHas('tickets',fn ($items)=>$items->total()===17 && $items->count()===2)->assertViewHas('readyCount',17);
+            ->assertViewHas('tickets',fn ($items)=>$items->total()===17 && $items->count()===2)
+            ->assertViewHas('counts',fn ($counts)=>$counts['ready']===17);
         $this->getJson(route('admin.tickets.index',['from'=>'2026-10-20','to'=>'2026-10-10']))->assertUnprocessable()->assertJsonValidationErrors('to');
-        $this->postJson(route('admin.tickets.bulk-checkin'),['from'=>'invalid'])->assertUnprocessable();
+        $this->getJson(route('admin.tickets.index',['from'=>'invalid']))->assertUnprocessable()->assertJsonValidationErrors('from');
         $this->assertEquals(17,Ticket::where('status','confirmed')->count());
     }
 

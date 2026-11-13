@@ -31,12 +31,16 @@ class AdminNavigationTest extends TestCase
         foreach ([
             'admin.dashboard' => 'Bảng điều khiển', 'admin.website.index' => 'Quản lý website',
             'admin.header.edit' => 'Header & website', 'admin.footer.edit' => 'Quản lý footer',
-            'admin.showtimes.schedule' => 'Lịch chiếu', 'admin.tickets.show' => 'Vé & check-in',
+            'admin.monthly-movies.index' => 'Phim hay tháng',
+            'admin.showtimes.schedule' => 'Lịch chiếu',
+            'admin.tickets.index' => 'Quản lý vé', 'admin.tickets.create' => 'Quản lý vé', 'admin.tickets.show' => 'Quản lý vé',
+            'admin.food-orders.index' => 'Quản lý bắp nước', 'admin.food-orders.create' => 'Quản lý bắp nước', 'admin.food-orders.show' => 'Quản lý bắp nước',
             'admin.seats.map' => 'Sơ đồ ghế', 'admin.membership.index' => 'Thành viên & quyền lợi',
             'admin.permissions.edit' => 'Phân quyền admin', 'admin.promotions.display' => 'Khuyến mãi',
             'admin.movies.archive' => 'Phim', 'admin.movies.archive.show' => 'Phim',
-            'admin.payments.index' => 'Quản lý thanh toán', 'admin.payments.show' => 'Quản lý thanh toán',
-            'admin.payment-methods.index' => 'Phương thức thanh toán', 'admin.payment-methods.edit' => 'Phương thức thanh toán',
+            'admin.payments.index' => 'Lịch sử thanh toán', 'admin.payments.show' => 'Lịch sử thanh toán',
+            'admin.payment-methods.index' => 'Phương thức thanh toán', 'admin.payment-methods.create' => 'Phương thức thanh toán',
+            'admin.payment-methods.edit' => 'Phương thức thanh toán',
         ] as $route => $label) $this->assertActiveMenu($route, $label);
     }
 
@@ -45,6 +49,22 @@ class AdminNavigationTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'admin']));
         $this->assertActiveMenu('admin.users.create', 'Phân quyền admin', ['admin_only' => 1]);
         $this->assertActiveMenu('admin.users.edit', 'Phân quyền admin', ['from' => 'permissions']);
+    }
+
+    public function test_ticket_and_food_management_share_one_navigation_group(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+        $document = new DOMDocument();
+        @$document->loadHTML('<?xml encoding="utf-8" ?>'.view('admin.components.sidebar')->render());
+        $xpath = new DOMXPath($document);
+        $groups = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " sidebar-group ")][p[normalize-space()="Vé & check-in"]]');
+        $this->assertCount(1, $groups);
+        $links = $xpath->query('.//a[contains(concat(" ", normalize-space(@class), " "), " sidebar-link ")]', $groups->item(0));
+        $this->assertCount(2, $links);
+        $this->assertStringContainsString('Quản lý vé', $links->item(0)->textContent);
+        $this->assertSame(route('admin.tickets.index'), $links->item(0)->getAttribute('href'));
+        $this->assertStringContainsString('Quản lý bắp nước', $links->item(1)->textContent);
+        $this->assertSame(route('admin.food-orders.index'), $links->item(1)->getAttribute('href'));
     }
 
     private function assertActiveMenu(string $name, string $label, array $query = []): void

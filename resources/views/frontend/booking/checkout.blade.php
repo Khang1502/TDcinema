@@ -35,7 +35,7 @@
       data-hold-url="{{ route('booking.hold', $showtime) }}"
       data-hold-expires-at="{{ $holdExpiresAt ?? '' }}"
       data-initial-seats='@json(($initialSelected ?? collect())->values())'
-      data-max-seats="{{ $maxSelectable ?? 8 }}"
+      data-max-seats="{{ $maxSelectable ?? config('booking_limits.seats_per_order') }}"
       data-msg-seat-required="Vui lòng chọn ít nhất 1 ghế."
       data-msg-seat-limit="Chỉ được chọn tối đa {max} ghế."
       data-currency-suffix=" đ">
@@ -83,7 +83,7 @@
 
     <div class="grid">
         <div class="card seat-card">
-            <div class="seat-card-heading"><div><span>BƯỚC 02</span><h1>Chọn vị trí đẹp nhất</h1></div><p>Chọn tối đa {{ $maxSelectable ?? 8 }} ghế</p></div>
+            <div class="seat-card-heading"><div><span>BƯỚC 02</span><h1>Chọn vị trí đẹp nhất</h1></div><p>Chọn tối đa {{ $maxSelectable ?? config('booking_limits.seats_per_order') }} ghế</p></div>
             <div class="screen"><span>Màn hình</span><div class="screen-bar"></div><small>Hướng nhìn</small></div>
             <div class="seat-map" tabindex="0" role="region" aria-label="Sơ đồ ghế, cuộn ngang để xem toàn bộ ghế trên màn hình nhỏ">
                 <div class="seat-map-rows" style="--seat-layout: {{ $seatLayout['template'] }}; --seat-map-width: {{ $seatLayout['width'] }}px; --seat-map-min-width: {{ $seatLayout['min_width'] }}px;">

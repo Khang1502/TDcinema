@@ -29,6 +29,10 @@
 .ticket-info h3{margin:0;font-size:16px;font-weight:800;color:#0f172a;}
 .ticket-meta{font-size:13px;color:#475569;margin:4px 0;}
 .ticket-meta strong{color:#0f172a;}
+.booking-seats{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.booking-seat{padding:5px 9px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;color:#334155;font-size:11px;font-weight:700}
+.booking-seat.is-used{border-color:#bbf7d0;background:#f0fdf4;color:#15803d}
+.booking-seat.is-cancelled{border-color:#fecaca;background:#fef2f2;color:#b91c1c}
 .ticket-row{display:flex;align-items:center;gap:10px;font-size:13px;color:#334155;}
 .badge-status{padding:5px 10px;border-radius:999px;font-weight:700;font-size:12px;}
 .badge-success{background:#e7f9ee;color:#0f9d58;border:1px solid #c7f0d9;}
@@ -48,7 +52,7 @@ a.ticket-page:hover{border-color:#2563eb;color:#1d4ed8;background:#eff6ff;transf
 .empty{padding:20px;text-align:center;color:#6b7280;}
 /* Modal */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100;}
-.modal-card{background:#fff;border-radius:16px;max-width:360px;width:90%;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.2);position:relative;}
+.modal-card{background:#fff;border-radius:16px;max-width:360px;width:90%;max-height:calc(100vh - 24px);overflow-y:auto;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.2);position:relative;}
 .modal-close{position:absolute;right:12px;top:12px;border:none;background:transparent;font-size:18px;cursor:pointer;color:#6b7280;}
 .modal-poster{width:120px;height:180px;border-radius:12px;overflow:hidden;margin:0 auto 10px;}
 .modal-poster img{width:100%;height:100%;object-fit:cover;}
@@ -59,6 +63,13 @@ a.ticket-page:hover{border-color:#2563eb;color:#1d4ed8;background:#eff6ff;transf
 .modal-qr img{width:160px;height:160px;object-fit:contain;}
 .modal-row{display:flex;justify-content:space-between;font-size:13px;color:#334155;margin:4px 0;}
 .modal-row strong{color:#0f172a;}
+.modal-food-orders:not([hidden]){display:block;margin:14px 0;padding:14px;border:1px solid #fbbf24;border-radius:14px;background:linear-gradient(135deg,#fffbeb,#fff3cc);box-shadow:0 6px 18px rgba(180,83,9,.12);text-align:center;}
+.modal-food-orders__heading{color:#92400e;font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;}
+.modal-food-orders__list{display:grid;gap:8px;margin-top:10px;}
+.modal-food-orders__item{display:grid;gap:3px;padding:9px 10px;border:1px solid #fcd34d;border-radius:10px;background:#fff;}
+.modal-food-orders__item strong{color:#7c2d12;font-size:24px;font-weight:900;letter-spacing:.08em;line-height:1.2;overflow-wrap:anywhere;text-shadow:0 1px 0 #fde68a;}
+.modal-food-orders__item span{color:#92400e;font-size:12px;font-weight:700;}
+.modal-food-orders p{margin:10px 0 0;color:#78350f;font-size:12px;font-weight:600;}
 .modal-footer{font-size:12px;color:#6b7280;text-align:center;margin-top:8px;}
 /* Footer */
 .footer { background:#232633; color:#fff; padding:32px 0 20px; font-size:14px; margin-top:32px; }
@@ -78,5 +89,6 @@ a.ticket-page:hover{border-color:#2563eb;color:#1d4ed8;background:#eff6ff;transf
 .footer-bottom { border-top:1px solid rgba(255,255,255,.1); margin-top:20px; padding-top:12px; text-align:center; font-size:12px; color:rgba(255,255,255,.5); }
 @media(max-width:960px){.history-grid{grid-template-columns:1fr;}}
 @media(max-width:640px){.ticket-pagination{align-items:stretch;flex-direction:column}.ticket-pagination__summary{text-align:center}.ticket-pagination__controls{justify-content:center;flex-wrap:wrap}.ticket-page{width:36px;height:36px;flex-basis:36px}}
+@media(max-width:640px){.ticket-card{grid-template-columns:75px 1fr;align-items:start}.ticket-poster{width:75px;height:110px}.ticket-info>div{flex-wrap:wrap}.ticket-info>div>div:last-child{align-items:flex-start!important}}
 .footer-logo{width:104px;height:104px;flex:0 0 104px;display:grid;place-items:center;padding:0;overflow:hidden;background:transparent;box-shadow:none}
 .footer-logo img{width:100%;height:100%;object-fit:contain;transform:scale(1.5);filter:brightness(1.6) saturate(.9)}

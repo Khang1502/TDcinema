@@ -63,8 +63,9 @@ class FakePaymentController extends Controller
 
         if ($hasValidSession) {
             $selectedSeats = $sessionSeats;
-            $comboTotal = (float) session('booking.combo_total', $comboTotal);
+            $comboTotal = (float) ($pending['combo_total'] ?? session('booking.combo_total', $comboTotal));
         }
+        $comboItems = $hasValidSession ? ($pending['combo_items'] ?? session('booking.combo_items', [])) : [];
 
         if ($showtime) {
             $ticketTotal = $this->bookingService->calculateTicketTotal($showtime, $selectedSeats);
@@ -74,6 +75,7 @@ class FakePaymentController extends Controller
         $promoDiscount = 0;
         $appliedPromoCode = '';
         $pointsEarned = 0;
+        $foodPickupCode = null;
 
         $success = $resultCode === '0';
         if ($success && (!$hasValidSession || !Auth::check())) {
@@ -81,32 +83,18 @@ class FakePaymentController extends Controller
             $message = 'Phiên đặt vé đã hết hoặc chưa đăng nhập.';
         }
 
-        // Tạo mã vé tạm và QR (demo). Nếu đã có ticket từ DB, có thể thay bằng ticket->code.
-        $bookingCode = strtoupper(substr(md5(($extra['showtime_id'] ?? '').$selectedSeats->implode(',').microtime(true)), 0, 10));
-        // Tạo QR inline (SVG base64) với payload chứa thông tin vé
-        $cinema = $showtime?->room?->cinema?->name ?? 'N/A';
-        $room = $showtime?->room?->name ?? 'N/A';
-        $movieTitle = $showtime?->movie?->title ?? 'N/A';
-        $payload = implode('|', [
-            'TD-TICKET',
-            'BOOKING=' . $bookingCode,
-            'SHOWTIME=' . ($showtime->id ?? 'N/A'),
-            'MOVIE=' . $movieTitle,
-            'CINEMA=' . $cinema,
-            'ROOM=' . $room,
-            'SEATS=' . ($selectedSeats->implode(', ') ?: 'N/A'),
-        ]);
+        $bookingCode = 'WEB-'.Str::upper(Str::random(16));
         $qrSvg = QrCode::format('svg')
             ->encoding('UTF-8')
             ->size(200)
             ->margin(1)
-            ->generate($payload);
+            ->generate($bookingCode);
         $qrUrl = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
 
         // Nếu thành công và có showtime + ghế => ghi xuống DB (demo)
         if ($success && $showtime && $selectedSeats->isNotEmpty() && Auth::check()) {
             try {
-                DB::transaction(function () use ($showtime, $selectedSeats, $ticketTotal, $comboTotal, &$grandTotal, &$promoDiscount, &$appliedPromoCode, &$pointsEarned, $bookingCode, $pending) {
+                DB::transaction(function () use ($showtime, $selectedSeats, $ticketTotal, $comboTotal, $comboItems, &$grandTotal, &$promoDiscount, &$appliedPromoCode, &$pointsEarned, &$foodPickupCode, $bookingCode, $pending) {
                     $currentShow = Showtime::with('movie')->lockForUpdate()->findOrFail($showtime->id);
                     if ($currentShow->status !== 'active' || $currentShow->movie?->status !== 'now_showing') {
                         throw \Illuminate\Validation\ValidationException::withMessages(['showtime' => 'Suất chiếu đã đóng hoặc phim chưa mở lịch.']);
@@ -173,15 +161,23 @@ class FakePaymentController extends Controller
                         if ($promotion) $this->promotionService->consume($promotion);
                         $pointsEarned = $this->membership->award($invoice);
 
-                        // Lưu order combo (nếu có) gắn với vé đầu tiên (demo)
+                        // Gắn đơn bắp nước với vé đầu tiên; giá và số lượng lấy từ phiên thanh toán đã xác minh.
                         if ($comboTotal > 0 && $userId) {
-                            FoodOrder::create([
+                            $foodOrder = FoodOrder::create([
                                 'user_id'     => $userId,
                                 'ticket_id'   => $tickets[0]->id,
                                 'total_price' => $comboTotal,
                                 'pickup_code' => 'F' . strtoupper(Str::random(5)),
                                 'status'      => 'completed',
                             ]);
+                            $foodPickupCode = $foodOrder->pickup_code;
+                            foreach ($comboItems as $id => $item) {
+                                $foodOrder->items()->create([
+                                    'food_item_id' => $id,
+                                    'quantity' => (int) $item['quantity'],
+                                    'price' => (float) $item['price'],
+                                ]);
+                            }
                         }
                     }
                 });
@@ -210,6 +206,7 @@ class FakePaymentController extends Controller
             'appliedPromoCode' => $appliedPromoCode,
             'pointsEarned'  => $pointsEarned,
             'bookingCode'   => $bookingCode,
+            'foodPickupCode'=> $foodPickupCode,
             'qrUrl'         => $qrUrl,
         ]);
     }

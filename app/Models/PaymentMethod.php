@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class PaymentMethod extends Model
 {
@@ -18,7 +19,14 @@ class PaymentMethod extends Model
         'cash' => ['name'=>'Tiền mặt', 'description'=>'Thanh toán khi nhân viên tạo vé tại quầy.', 'is_online'=>false, 'is_enabled'=>true],
     ];
 
-    protected $fillable = ['name', 'description', 'instructions', 'badge', 'sort_order', 'is_enabled'];
+    protected $fillable = ['code', 'name', 'description', 'instructions', 'badge', 'sort_order', 'is_online', 'is_enabled', 'logo_path'];
+
+    private const DEFAULT_LOGOS = [
+        'onepay' => 'onepay.svg', 'shopeepay' => 'shopeepay.svg',
+        'momo' => 'momo.svg', 'zalopay' => 'zalopay.png',
+        'payoo' => 'payoo.svg', 'fundiin' => 'fundiin.png',
+        'vnpay' => 'vnpay.svg', 'cash' => 'cash.svg',
+    ];
 
     protected function casts(): array
     {
@@ -27,7 +35,7 @@ class PaymentMethod extends Model
 
     public function scopeAvailableOnline(Builder $query): Builder
     {
-        return $query->whereIn('code', array_keys(self::DEFAULTS))->where('is_online', true)->where('is_enabled', true)
+        return $query->where('is_online', true)->where('is_enabled', true)
             ->orderBy('sort_order')->orderBy('id');
     }
 
@@ -54,6 +62,18 @@ class PaymentMethod extends Model
 
     public function monogram(): string
     {
-        return ['onepay'=>'1P', 'shopeepay'=>'SP', 'momo'=>'M', 'zalopay'=>'ZP', 'payoo'=>'PO', 'fundiin'=>'F', 'vnpay'=>'VNP', 'cash'=>'TM'][$this->code] ?? 'TT';
+        return ['onepay'=>'1P', 'shopeepay'=>'SP', 'momo'=>'M', 'zalopay'=>'ZP', 'payoo'=>'PO', 'fundiin'=>'F', 'vnpay'=>'VNP', 'cash'=>'TM'][$this->code]
+            ?? mb_strtoupper(mb_substr(trim($this->name), 0, 2));
+    }
+
+    public function logoUrl(): ?string
+    {
+        if ($this->logo_path) {
+            return Storage::disk('public')->url($this->logo_path);
+        }
+
+        $filename = self::DEFAULT_LOGOS[$this->code] ?? null;
+
+        return $filename ? asset('assets/images/payment-methods/'.$filename) : null;
     }
 }

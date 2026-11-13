@@ -125,6 +125,15 @@ class ShowtimeController extends Controller
     public function update(Request $request, Showtime $showtime)
     {
         $data = $this->validatedData($request);
+        if ($showtime->tickets()->exists() && (
+            (int) $showtime->movie_id !== (int) $data['movie_id']
+            || (int) $showtime->room_id !== (int) $data['room_id']
+            || $showtime->start_time->format('Y-m-d\TH:i') !== $data['start_time']
+            || $showtime->end_time->format('Y-m-d\TH:i') !== $data['end_time']
+            || (float) $showtime->base_price !== (float) $data['base_price']
+        )) {
+            return back()->withInput()->withErrors(['showtime' => 'Suất chiếu đã có vé; không thể đổi phim, phòng, thời gian hoặc giá. Có thể chuyển trạng thái sang hủy.']);
+        }
         $conflicts = $this->findConflicts($data, $showtime->id);
         if ($conflicts->isNotEmpty()) {
             return back()

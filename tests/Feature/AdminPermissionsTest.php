@@ -225,7 +225,7 @@ class AdminPermissionsTest extends TestCase
         }
     }
 
-    public function test_ticket_filter_limits_showtime_options_to_avoid_memory_exhaustion(): void
+    public function test_ticket_filter_limits_showtimes_and_counter_sale_loads_movies_on_demand(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $cinema = Cinema::create(['name' => 'TD Test', 'address' => 'Test', 'city' => 'HCM']);
@@ -251,6 +251,6 @@ class AdminPermissionsTest extends TestCase
         $this->actingAs($admin)
             ->get('/admin/tickets/create')
             ->assertOk()
-            ->assertViewHas('showtimes', fn ($showtimes) => $showtimes->count() <= 200);
+            ->assertViewHas('movies', fn ($movies) => $movies->count() === 1 && $movies->first()->id === $movie->id);
     }
 }

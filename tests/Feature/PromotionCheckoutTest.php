@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\{Cinema, Invoice, Movie, Payment, Promotion, Room, Seat, Showtime, Ticket, User};
+use App\Models\{Cinema, FoodItem, FoodOrder, Invoice, Movie, Payment, Promotion, Room, Seat, Showtime, Ticket, User};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\{Cache, Http};
 use Tests\TestCase;
@@ -46,9 +46,37 @@ class PromotionCheckoutTest extends TestCase
         $disabled = $this->promo(['status' => 'expired']);
         $this->get(route('promotions.index'))->assertOk()->assertSee($active->code)->assertDontSee($upcoming->code)->assertDontSee($expired->code)->assertDontSee($empty->code)->assertDontSee($disabled->code);
         $this->get(route('promotions.index', ['filter' => 'upcoming']))->assertOk()->assertSee($upcoming->code)->assertDontSee($active->code);
-        $this->post(route('promotions.select', $active))->assertRedirect(route('movies.index'))->assertSessionHas('promotion.preferred_code', $active->code);
+        $this->post(route('promotions.select', $active))->assertRedirect(route('login'))
+            ->assertSessionHas('status', 'Hãy đăng nhập để áp dụng ưu đãi này.')
+            ->assertSessionHas('promotion.preferred_code', $active->code)
+            ->assertSessionHas('url.intended', route('movies.index'));
+        $this->get(route('login'))->assertOk()->assertSee('Hãy đăng nhập để áp dụng ưu đãi này.');
+        $customer = User::factory()->create(['role' => 'customer']);
+        $this->post(route('login'), ['email' => $customer->email, 'password' => 'password'])
+            ->assertRedirect(route('movies.index'))
+            ->assertSessionHas('promotion.preferred_code', $active->code);
         $this->assertEquals(2, $active->fresh()->usage_limit);
         $this->post(route('promotions.select', $expired))->assertSessionHasErrors('promo_code');
+    }
+
+    public function test_guest_promotion_selection_keeps_page_open_for_login_modal_and_preserves_code(): void
+    {
+        $active = $this->promo();
+
+        $this->get(route('promotions.index'))->assertOk()
+            ->assertSee('data-promo-select-guest', false)
+            ->assertSee('id="authOverlay"', false);
+
+        $this->postJson(route('promotions.select', $active))->assertOk()
+            ->assertJsonPath('requires_login', true)
+            ->assertJsonPath('message', 'Hãy đăng nhập để áp dụng ưu đãi này.')
+            ->assertSessionHas('promotion.preferred_code', $active->code)
+            ->assertSessionHas('url.intended', route('movies.index'));
+
+        $customer = User::factory()->create(['role' => 'customer']);
+        $this->post(route('login'), ['email' => $customer->email, 'password' => 'password'])
+            ->assertRedirect(route('movies.index'))
+            ->assertSessionHas('promotion.preferred_code', $active->code);
     }
 
     public function test_payment_lists_every_available_code_ranked_by_actual_savings_and_keeps_selected_code(): void
@@ -114,10 +142,38 @@ class PromotionCheckoutTest extends TestCase
         $this->assertDatabaseHas('invoices', ['promotion_id' => $promo->id, 'total_amount' => 130000]);
         $this->assertEquals(130000, Payment::sum('amount'));
         $this->assertDatabaseCount('tickets', 3);
+        $this->assertSame(1, Ticket::query()->distinct()->count('qr_code'));
+        $this->assertSame('WEB-', substr(Ticket::first()->qr_code, 0, 4));
         $this->assertEquals(0, $promo->fresh()->usage_limit);
         $this->get($url)->assertViewHas('success', false);
         $this->assertDatabaseCount('invoices', 1);
         $this->assertEquals(0, $promo->fresh()->usage_limit);
+    }
+
+    public function test_online_combo_selection_saves_items_for_food_checkin(): void
+    {
+        $showtime = $this->booking();
+        $combo = FoodItem::create(['name' => 'Combo online', 'price' => 39000, 'status' => 'available']);
+        $this->get(route('booking.combo', $showtime))->assertOk()->assertSee('Combo online');
+        $this->get(route('booking.payment', ['showtime' => $showtime, 'items' => [$combo->id => 11]]))
+            ->assertSessionHasErrors('items.'.$combo->id);
+        $this->get(route('booking.payment', [
+            'showtime' => $showtime, 'items' => [$combo->id => 2], 'combo_total' => 1,
+        ]))->assertOk()->assertViewHas('comboTotal', 78000);
+        $response = $this->post(route('booking.payment.process', $showtime), ['payment_method' => 'onepay']);
+        $this->get(route('booking.payment', ['showtime' => $showtime, 'combo_total' => 0]))->assertOk();
+        $this->get($response->headers->get('Location'))->assertOk()
+            ->assertViewHas('success', true)->assertSee('Mã nhận bắp nước');
+
+        $order = FoodOrder::firstOrFail();
+        $this->assertSame(Ticket::first()->id, $order->ticket_id);
+        $this->assertNull($order->payment);
+        $this->assertEquals(78000, $order->total_price);
+        $this->assertDatabaseHas('food_order_items', [
+            'food_order_id' => $order->id, 'food_item_id' => $combo->id, 'quantity' => 2, 'price' => 39000,
+        ]);
+        $this->assertTrue($order->isPaid());
+        $this->get(route('customer.tickets'))->assertOk()->assertSee($order->pickup_code);
     }
 
     public function test_expiring_or_exhausting_a_code_before_payment_stops_purchase_without_charging_full_price(): void

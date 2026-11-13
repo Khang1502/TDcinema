@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-label="Chưa có ảnh bắp nước">
+  <rect width="160" height="160" rx="20" fill="#20374b"/>
+  <circle cx="80" cy="75" r="46" fill="#304f63"/>
+  <path d="M53 66h54l-7 61H60z" fill="#f5c779"/>
+  <path d="M61 66h11l5 61H68zm27 0h11l-8 61h-8z" fill="#e87855"/>
+  <path d="M51 67c-7-5-7-15 2-19 2-12 18-14 24-5 8-9 23-6 26 5 12 2 15 16 6 21z" fill="#fff3d3"/>
+  <path d="M59 52c4-5 11-3 13 2m17-5c5-3 11 1 12 6" fill="none" stroke="#ead6ac" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Promotion;
 use App\Models\Showtime;
 use App\Models\PaymentMethod;
+use App\Models\FoodItem;
 use App\Services\BookingService;
 use App\Services\BookingHoldService;
 use App\Services\PromotionService;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
@@ -49,7 +51,28 @@ class PaymentController extends Controller
 
         $ticketPrice = (float) ($showtime->base_price ?? 0);
         $ticketTotal = $this->bookingService->calculateTicketTotal($showtime, $selectedSeats);
-        $comboTotal  = max(0, (float) request('combo_total', session('booking.combo_total', 0)));
+        $comboTotal = max(0, (float) session('booking.combo_total', 0));
+        if (request()->query->has('items')) {
+            $selection = request()->validate([
+                'items' => ['required', 'array', 'max:100'],
+                'items.*' => ['integer', 'min:0', 'max:'.config('booking_limits.quantity_per_food_item')],
+            ]);
+            $quantities = collect($selection['items'])->filter(fn ($quantity) => (int) $quantity > 0);
+            $products = FoodItem::whereIn('id', $quantities->keys())->where('status', 'available')->get()->keyBy('id');
+            if ($products->count() !== $quantities->count()) {
+                throw ValidationException::withMessages(['items' => 'Có sản phẩm không còn bán. Vui lòng chọn lại combo.']);
+            }
+            $comboItems = $quantities->mapWithKeys(fn ($quantity, $id) => [$id => [
+                'quantity' => (int) $quantity,
+                'price' => (float) $products[$id]->price,
+            ]])->all();
+            $comboTotal = $quantities->reduce(fn ($sum, $quantity, $id) => $sum + (float) $products[$id]->price * (int) $quantity, 0);
+            session()->put('booking.combo_items', $comboItems);
+        } elseif (request()->query->has('combo_total')) {
+            // Hỗ trợ các đường dẫn thanh toán cũ chỉ truyền tổng combo.
+            $comboTotal = max(0, (float) request('combo_total'));
+            session()->forget('booking.combo_items');
+        }
 
         // Lưu state tạm vào session để dùng cho bước thanh toán
         session()->put('booking.seats', $selectedSeats->implode(','));
@@ -69,6 +92,7 @@ class PaymentController extends Controller
         $paymentMethods = PaymentMethod::availableOnline()->get()->map(fn ($method) => [
             'key'=>$method->code, 'label'=>$method->name, 'description'=>$method->description,
             'instructions'=>$method->instructions, 'badge'=>$method->badge, 'demo'=>$method->isDemo(),
+            'logo'=>$method->logoUrl(),
         ]);
 
         return view('frontend.booking.payment', [
@@ -126,7 +150,10 @@ class PaymentController extends Controller
         }
 
         if ($this->momoDemoEnabled()) {
-            session()->put('booking.pending_payment', ['showtime_id' => $showtime->id, 'promo_code' => $code, 'method' => 'momo', 'mode' => 'demo']);
+            session()->put('booking.pending_payment', [
+                'showtime_id' => $showtime->id, 'promo_code' => $code, 'method' => 'momo', 'mode' => 'demo',
+                'combo_total' => $comboTotal, 'combo_items' => session('booking.combo_items', []),
+            ]);
             return $this->demoPaymentReturn($showtime, $code);
         }
 
@@ -176,7 +203,10 @@ class PaymentController extends Controller
             'signature'   => $signature,
         ];
 
-        session()->put('booking.pending_payment', ['showtime_id' => $showtime->id, 'promo_code' => $code, 'method' => 'momo', 'mode' => 'gateway']);
+        session()->put('booking.pending_payment', [
+            'showtime_id' => $showtime->id, 'promo_code' => $code, 'method' => 'momo', 'mode' => 'gateway',
+            'combo_total' => $comboTotal, 'combo_items' => session('booking.combo_items', []),
+        ]);
         try {
             $gatewayResponse = Http::acceptJson()->timeout(15)->connectTimeout(5)->post($endpoint, $payload);
             $response = $gatewayResponse->json();
@@ -238,7 +268,11 @@ class PaymentController extends Controller
             return $this->momoPayment($request, $showtime);
         }
 
-        session()->put('booking.pending_payment', ['showtime_id' => $showtime->id, 'promo_code' => $code, 'method' => $method, 'mode' => 'demo']);
+        session()->put('booking.pending_payment', [
+            'showtime_id' => $showtime->id, 'promo_code' => $code, 'method' => $method, 'mode' => 'demo',
+            'combo_total' => (float) session('booking.combo_total', 0),
+            'combo_items' => session('booking.combo_items', []),
+        ]);
         return $this->demoPaymentReturn($showtime, $code);
     }
 

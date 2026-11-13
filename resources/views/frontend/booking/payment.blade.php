@@ -110,6 +110,7 @@
                     @forelse($paymentMethods as $pm)
                         <label class="method">
                             <input type="radio" name="payment_method" value="{{ $pm['key'] }}" data-demo="{{ $pm['demo'] ? 'true' : 'false' }}">
+                            @if($pm['logo'])<img class="method-logo" src="{{ $pm['logo'] }}" alt="" loading="lazy" width="54" height="54">@endif
                             <div>
                                 <div class="label">{{ $pm['label'] }} @if($pm['badge'])<span class="method-highlight-badge">{{ $pm['badge'] }}</span>@endif @if($pm['demo'] ?? false)<span class="method-demo-badge">Mô phỏng</span>@endif</div>
                                 @if($pm['description'])<p class="method-description">{{ $pm['description'] }}</p>@endif

@@ -9,9 +9,25 @@ detailButtons.forEach((btn) => {
         document.getElementById('modalSeat').textContent = btn.dataset.seat || '';
         document.getElementById('modalCode').textContent = btn.dataset.code || '';
         document.getElementById('modalPrice').textContent = btn.dataset.price || '';
+        const foodOrders = JSON.parse(btn.dataset.foodOrders || '[]');
+        const foodSection = document.getElementById('modalFoodOrders');
+        const foodList = document.getElementById('modalFoodOrdersList');
+        foodList.replaceChildren();
+        foodOrders.forEach((order) => {
+            const item = document.createElement('div');
+            item.className = 'modal-food-orders__item';
+            const code = document.createElement('strong');
+            code.textContent = order.code;
+            const status = document.createElement('span');
+            status.textContent = order.received ? 'Đã nhận đủ' : order.fulfilled > 0
+                ? `Đã nhận ${order.fulfilled}/${order.total} phần` : 'Chưa nhận';
+            item.append(code, status);
+            foodList.append(item);
+        });
+        foodSection.hidden = foodOrders.length === 0;
+        document.querySelector('#ticketModal .modal-footer').textContent = btn.dataset.note || '';
         document.getElementById('modalPoster').src = btn.dataset.poster || '';
-        const qrData = encodeURIComponent(btn.dataset.code || '');
-        document.getElementById('modalQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${qrData}`;
+        document.getElementById('modalQr').src = btn.dataset.qr || '';
         modal.style.display = 'flex';
     });
 });

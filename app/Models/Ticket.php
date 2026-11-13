@@ -9,13 +9,18 @@ class Ticket extends Model
 {
     use HasFactory;
 
+    public const EXPIRED_REASON = 'Vé quá hạn';
+
     protected $fillable = [
         'user_id',
+        'sold_by',
+        'sales_channel',
         'showtime_id',
         'seat_id',
         'price',
         'qr_code',
         'status',
+        'cancellation_reason',
         'booked_at',
     ];
 
@@ -26,6 +31,11 @@ class Ticket extends Model
     public function user()
     {
         return $this->belongsTo(User::class)->withTrashed();
+    }
+
+    public function seller()
+    {
+        return $this->belongsTo(User::class, 'sold_by')->withTrashed();
     }
 
     public function showtime()

@@ -13,7 +13,7 @@
     $params = array_filter($filters, fn ($value) => $value !== '' && $value !== null);
 @endphp
 <div class="ad-page payment-page">
-    <header class="ad-heading"><div><span class="ad-kicker">TD CINEMA · CHI TIẾT THANH TOÁN</span><h1>Giao dịch #{{ $payment->id }}</h1><p>Thông tin thanh toán và vé liên quan.</p></div><a class="ad-button" href="{{ route('admin.payments.index', $params) }}">@include('admin.partials.icon', ['name'=>'arrow-left', 'size'=>17]) Danh sách thanh toán</a></header>
+    <header class="ad-heading"><div><span class="ad-kicker">TD CINEMA · CHI TIẾT THANH TOÁN</span><h1>Giao dịch #{{ $payment->id }}</h1><p>Thông tin thanh toán và vé liên quan.</p></div><a class="ad-button" href="{{ route('admin.payments.index', $params) }}">@include('admin.partials.icon', ['name'=>'arrow-left', 'size'=>17]) Lịch sử thanh toán</a></header>
 
     <div class="pay-detail-grid">
         <div class="pay-detail-main">

@@ -1,5 +1,5 @@
 @extends('admin.layouts.app')
-@section('title', 'Quản lý thanh toán')
+@section('title', 'Lịch sử thanh toán')
 @include('admin.payments._assets')
 @section('content')
 @php
@@ -10,7 +10,7 @@
 @endphp
 <div class="ad-page payment-page">
     <header class="ad-heading">
-        <div><span class="ad-kicker">TD CINEMA · GIAO DỊCH</span><h1>Quản lý thanh toán</h1><p>Tra cứu khoản thu, theo dõi trạng thái và đối chiếu thanh toán của từng vé.</p></div>
+        <div><span class="ad-kicker">TD CINEMA · GIAO DỊCH</span><h1>Lịch sử thanh toán</h1><p>Tra cứu khoản thu, theo dõi trạng thái và đối chiếu thanh toán của từng vé.</p></div>
         <div class="ad-actions">
             @if(auth()->user()->hasAdminPermission('payment-methods.manage'))
             <a class="ad-button" href="{{ route('admin.payment-methods.index') }}">@include('admin.partials.icon', ['name'=>'settings', 'size'=>17]) Phương thức thanh toán</a>

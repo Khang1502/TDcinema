@@ -1,0 +1,44 @@
+.quantity-stepper {
+    display: inline-grid;
+    grid-template-columns: 36px 55px 36px;
+    align-items: stretch;
+    width: max-content;
+    height: 38px;
+    overflow: hidden;
+    border: 1px solid #496482;
+    border-radius: 9px;
+    background: #0a1525;
+}
+.quantity-stepper button {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    background: #1b3450;
+    color: #e6f4ff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+.quantity-stepper button:hover:not(:disabled) { background: #2b557d; }
+.quantity-stepper button:focus-visible { outline: 2px solid #87cfff; outline-offset: -3px; }
+.quantity-stepper button:disabled { color: #71859d; background: #142439; cursor: not-allowed; }
+.admin-content .quantity-stepper input[type="number"] {
+    width: 55px;
+    height: 36px;
+    margin: 0;
+    padding: 0 2px;
+    border: 0 !important;
+    border-right: 1px solid #38526f !important;
+    border-left: 1px solid #38526f !important;
+    border-radius: 0;
+    background: #0a1525 !important;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+.quantity-stepper input[type="number"]::-webkit-inner-spin-button,
+.quantity-stepper input[type="number"]::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }

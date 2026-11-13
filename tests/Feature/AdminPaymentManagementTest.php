@@ -46,7 +46,7 @@ class AdminPaymentManagementTest extends TestCase
         foreach (['INV-1','INV-2'] as $code) Invoice::create(['ticket_id'=>$ticket->id, 'user_id'=>$ticket->user_id, 'invoice_code'=>$code, 'total_amount'=>70000]);
 
         $this->actingAs(User::factory()->create(['role'=>'admin']))->get(route('admin.payments.index'))
-            ->assertOk()->assertSee('Quản lý thanh toán')->assertSee('Đã hoàn tiền')
+            ->assertOk()->assertSee('Lịch sử thanh toán')->assertSee('Đã hoàn tiền')
             ->assertViewHas('summary', fn ($s) => (int)$s->total === 4 && (float)$s->paid_amount === 110000.0 && (float)$s->refunded_amount === 30000.0 && (int)$s->failed_count === 1)
             ->assertViewHas('payments', fn ($rows) => $rows->total() === 4);
         $this->assertSame(4, Payment::count());

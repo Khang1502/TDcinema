@@ -5,7 +5,7 @@ return [
         'staff' => [
             'label' => 'Basic admin',
             'description' => 'Nhân viên vận hành vé và check-in hằng ngày.',
-            'permissions' => ['dashboard.view', 'tickets.manage'],
+            'permissions' => ['dashboard.view', 'tickets.manage', 'food-sales.manage'],
         ],
         'manager' => [
             'label' => 'Manager admin',
@@ -13,7 +13,7 @@ return [
             'permissions' => [
                 'dashboard.view', 'reports.view', 'payments.manage', 'payment-methods.manage', 'tickets.manage', 'movies.manage',
                 'showtimes.manage', 'cinemas.manage', 'rooms.manage', 'seats.manage',
-                'promotions.manage', 'foods.manage', 'users.view', 'banners.manage', 'cinema-corner.manage', 'membership.manage', 'footer.manage', 'header.manage', 'gifts.manage',
+                'promotions.manage', 'foods.manage', 'food-sales.manage', 'users.view', 'banners.manage', 'cinema-corner.manage', 'membership.manage', 'footer.manage', 'header.manage', 'gifts.manage',
             ],
         ],
         'admin' => [
@@ -25,7 +25,7 @@ return [
     'features' => [
         'dashboard.view' => 'Xem bảng điều khiển',
         'reports.view' => 'Xem và xuất báo cáo',
-        'payments.manage' => 'Quản lý thanh toán: tra cứu và xuất giao dịch',
+        'payments.manage' => 'Lịch sử thanh toán: tra cứu và xuất giao dịch',
         'payment-methods.manage' => 'Cấu hình phương thức thanh toán',
         'tickets.manage' => 'Quản lý vé & check-in',
         'movies.manage' => 'Quản lý phim & thể loại',
@@ -41,6 +41,7 @@ return [
         'promotions.manage' => 'Quản lý khuyến mãi',
         'membership.manage' => 'Quản lý thành viên, cấp bậc & quyền lợi',
         'foods.manage' => 'Quản lý dịch vụ & đồ ăn',
+        'food-sales.manage' => 'Quản lý, bán và check-in bắp nước online và tại quầy',
         'users.view' => 'Xem danh sách người dùng',
         'users.manage' => 'Tạo, sửa, khóa và xóa người dùng',
         'permissions.manage' => 'Phân quyền tài khoản admin',

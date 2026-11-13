@@ -69,4 +69,20 @@ class MovieSearchTest extends TestCase
             ->assertOk()
             ->assertSee('Không tìm thấy phim phù hợp');
     }
+
+    public function test_top_rated_movies_are_ranked_and_have_their_own_heading(): void
+    {
+        foreach ([['Thấp', 3.8], ['Cao', 4.9], ['Giữa', 4.3], ['Chưa đánh giá', 0]] as [$title, $rating]) {
+            Movie::create(['title' => $title, 'duration' => 90, 'status' => 'now_showing', 'rating_avg' => $rating]);
+        }
+        Movie::create(['title' => 'Sắp chiếu điểm cao', 'duration' => 90, 'status' => 'upcoming', 'rating_avg' => 5]);
+        Movie::create(['title' => 'Ngừng chiếu điểm cao', 'duration' => 90, 'status' => 'inactive', 'rating_avg' => 5]);
+
+        $this->get(route('movies.index', ['status' => 'top_rated']))
+            ->assertOk()
+            ->assertSee('<h1 class="top-rated-heading">Phim hay tháng</h1>', false)
+            ->assertDontSee('class="nav-tabs"', false)
+            ->assertDontSee('class="status-badge', false)
+            ->assertViewHas('movies', fn ($movies) => $movies->pluck('title')->all() === ['Cao', 'Giữa']);
+    }
 }

@@ -6,17 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Cinema;
 use App\Models\Movie;
 use App\Models\Showtime;
+use App\Services\MonthlyMovieService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class MovieController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, MonthlyMovieService $monthlyMovies): View
     {
         $status = $request->query('status', 'now_showing');
         $search = trim((string) $request->query('q', ''));
-        $validStatuses = ['now_showing', 'upcoming', 'imax', 'all'];
+        $validStatuses = ['now_showing', 'upcoming', 'imax', 'top_rated', 'all'];
         if (!in_array($status, $validStatuses, true)) {
             $status = 'now_showing';
         }
@@ -26,11 +27,16 @@ class MovieController extends Controller
             ->where('status', 'active')
             ->first();
 
-        $query = Movie::orderByDesc('release_date');
-        if ($status === 'imax') {
+        $query = Movie::query();
+        if ($status === 'top_rated') {
+            $query = $monthlyMovies->rankedQuery();
+        } elseif ($status === 'imax') {
             $query->imax();
         } elseif ($status !== 'all') {
             $query->where('status', $status);
+        }
+        if ($status !== 'top_rated') {
+            $query->orderByDesc('release_date');
         }
         if ($search !== '') {
             $query->where(function ($movieQuery) use ($search) {

@@ -96,6 +96,7 @@
         .method-list{display:flex;flex-direction:column;gap:12px;}
         .method{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid #eef1f5;border-radius:12px;background:#f8fafc;}
         .method input{margin-top:4px;}
+        .method-logo{flex:none;width:54px;height:54px;padding:5px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;object-fit:contain;}
         .method .label{font-weight:700;}
         .timer{color:#e56b00;font-weight:800;font-size:15px;text-align:right;margin-bottom:8px;}
 

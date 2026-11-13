@@ -98,7 +98,7 @@ class BookingController extends Controller
                 ];
             });
 
-        $maxSelectable = 8;
+        $maxSelectable = (int) config('booking_limits.seats_per_order');
 
         return view('frontend.booking.checkout', [
             'showtime'        => $showtime,
@@ -114,9 +114,12 @@ class BookingController extends Controller
     public function hold(Request $request, Showtime $showtime): JsonResponse
     {
         abort_unless($showtime->status === 'active' && $showtime->movie?->status === 'now_showing', 404, 'Suất chiếu chưa mở hoặc đã đóng.');
+        $maxSeats = (int) config('booking_limits.seats_per_order');
         $data = $request->validate([
-            'seats' => ['required', 'array', 'min:1', 'max:8'],
+            'seats' => ['required', 'array', 'min:1', 'max:'.$maxSeats],
             'seats.*' => ['required', 'string', 'distinct', 'max:8'],
+        ], [
+            'seats.max' => 'Chỉ được chọn tối đa '.$maxSeats.' ghế cho mỗi giao dịch.',
         ]);
 
         $requested = $this->bookingService->parseSeatCodes(implode(',', $data['seats']));
@@ -152,9 +155,7 @@ class BookingController extends Controller
         $showtime->load(['movie', 'room.cinema']);
 
         // Combos/đồ ăn đang hoạt động
-        $combos = FoodItem::where(function ($q) {
-            $q->where('status', 1)->orWhereNull('status');
-        })
+        $combos = FoodItem::where('status', 'available')
             ->orderBy('created_at', 'desc')
             ->get();
 

@@ -65,6 +65,14 @@ class RevenueReportService
             ->selectRaw('COUNT(*) as combo_orders, COALESCE(SUM(total_price),0) as combo_value')->first();
         $summary += (array) $food;
 
+        // Counter food has its own payment; never multiply ticket revenue by joining order items.
+        $standaloneFood = DB::table('payments')->whereNull('ticket_id')->whereNotNull('food_order_id')
+            ->whereBetween(DB::raw('COALESCE(paid_at, created_at)'), [$filters['from'].' 00:00:00', $filters['to'].' 23:59:59'])
+            ->whereIn('status', ['paid', 'refunded']);
+        $summary['food_orders'] = (clone $standaloneFood)->where('status', 'paid')->count();
+        $summary['food_revenue'] = (float) (clone $standaloneFood)->where('status', 'paid')->sum('amount');
+        $summary['total_revenue'] = $summary['revenue'] + $summary['food_revenue'];
+
         $movieStats = (clone $base)->select('showtimes.movie_id as id')->selectRaw($this->metrics())->groupBy('showtimes.movie_id')->get()->keyBy('id');
         $cinemaStats = (clone $base)->select('rooms.cinema_id as id')->selectRaw($this->metrics())->groupBy('rooms.cinema_id')->get()->keyBy('id');
         $empty = array_fill_keys(['received', 'refunded', 'revenue', 'sold_tickets', 'used_tickets', 'settled_tickets', 'transactions'], 0);

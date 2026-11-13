@@ -2,7 +2,7 @@
     <nav class="ticket-pagination" role="navigation" aria-label="Phân trang lịch sử đặt vé">
         <p class="ticket-pagination__summary">
             Hiển thị <strong>{{ $paginator->firstItem() }}</strong>–<strong>{{ $paginator->lastItem() }}</strong>
-            trong tổng số <strong>{{ $paginator->total() }}</strong> vé
+            trong tổng số <strong>{{ $paginator->total() }}</strong> lượt đặt
         </p>
 
         <div class="ticket-pagination__controls">

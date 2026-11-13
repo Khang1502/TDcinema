@@ -4,14 +4,26 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cinema;
+use App\Models\FoodItem;
+use App\Models\FoodOrder;
+use App\Models\Invoice;
+use App\Models\Movie;
+use App\Models\PaymentMethod;
 use App\Models\Payment;
+use App\Models\Promotion;
 use App\Models\Seat;
 use App\Models\Showtime;
 use App\Models\Ticket;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use App\Services\BookingHoldService;
+use App\Services\MembershipService;
+use App\Services\PromotionService;
+use App\Services\TicketExpiryService;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class TicketController extends Controller
@@ -19,8 +31,9 @@ class TicketController extends Controller
     /**
      * Danh sách vé với bộ lọc.
      */
-    public function index(Request $request)
+    public function index(Request $request, TicketExpiryService $expiry)
     {
+        $expiry->expireOverdue();
         $filters = $this->ticketFilters($request);
         $base = Ticket::query();
         $this->applyTicketFilters($base,array_replace($filters,['status'=>'','payment_status'=>'']));
@@ -30,6 +43,12 @@ class TicketController extends Controller
         $query = Ticket::with(['showtime.movie','showtime.room.cinema','seat','user','payment','foodOrders']);
         $this->applyTicketFilters($query,$filters);
         $tickets = $query->orderByDesc('created_at')->orderByDesc('id')->paginate(15)->withQueryString();
+        $bookingTickets = Ticket::with(['seat', 'payment', 'foodOrders'])
+            ->whereIn('qr_code', $tickets->getCollection()->pluck('qr_code')->filter()->unique())
+            ->whereIn('showtime_id', $tickets->getCollection()->pluck('showtime_id')->unique())
+            ->orderBy('id')
+            ->get()
+            ->groupBy(fn ($row) => $row->showtime_id.'|'.$row->qr_code);
         $showtimeQuery = Showtime::with(['movie:id,title','room:id,cinema_id,name','room.cinema:id,name']);
         if ($filters['cinema_id']) $showtimeQuery->whereHas('room',fn ($q)=>$q->where('cinema_id',$filters['cinema_id']));
         if ($filters['movie_id']) $showtimeQuery->where('movie_id',$filters['movie_id']);
@@ -44,10 +63,8 @@ class TicketController extends Controller
         if ($filters['showtime_id'] && ($roomId = Showtime::whereKey($filters['showtime_id'])->value('room_id'))) {
             $seats = Seat::with('room.cinema')->where('room_id',$roomId)->orderBy('seat_row')->orderBy('seat_number')->get();
         }
-        $readyQuery = Ticket::where('status','confirmed')->whereHas('payment',fn ($q)=>$q->where('status','paid'));
-        $this->applyTicketFilters($readyQuery,$filters);
         return view('admin.tickets.index',[
-            'tickets'=>$tickets,'counts'=>$counts,'readyCount'=>$readyQuery->count(),'filters'=>$filters,
+            'tickets'=>$tickets,'bookingTickets'=>$bookingTickets,'counts'=>$counts,'filters'=>$filters,
             'movies'=>\App\Models\Movie::orderBy('title')->get(['id','title']),'cinemas'=>Cinema::orderBy('name')->get(['id','name']),
             'showtimes'=>$showtimes,'seats'=>$seats,'statuses'=>['pending','confirmed','cancelled','used'],
             'payStatuses'=>['unpaid','pending','paid','refunded','failed'],
@@ -79,6 +96,7 @@ class TicketController extends Controller
             $query->where(function ($q) use ($term) {
                 $number = ltrim($term,'#');
                 if (ctype_digit($number)) $q->orWhere('tickets.id',$number);
+                $q->orWhere('tickets.qr_code', 'like', '%'.$term.'%');
                 $q->orWhereHas('user',fn ($u)=>$u->where('name','like','%'.$term.'%')->orWhere('email','like','%'.$term.'%')->orWhere('phone','like','%'.$term.'%'));
             });
         }
@@ -93,16 +111,6 @@ class TicketController extends Controller
         if ($filters['to']) $query->whereDate('created_at','<=',$filters['to']);
     }
 
-    public function bulkCheckin(Request $request)
-    {
-        $filters = $this->ticketFilters($request);
-        $query = Ticket::where('status','confirmed')->whereHas('payment',fn ($q)=>$q->where('status','paid'));
-        $this->applyTicketFilters($query,$filters);
-        $updated = $query->update(['status'=>'used']);
-        return $updated ? back()->with('success',"Đã check-in {$updated} vé theo bộ lọc hiện tại.")
-            : back()->with('error','Không có vé nào phù hợp để check-in.');
-    }
-
     /**
      * Form tạo vé thủ công.
      */
@@ -111,132 +119,281 @@ class TicketController extends Controller
         $selectedShowtimeId = old('showtime_id', $request->query('showtime_id'));
         $selectedSeatId     = old('seat_id', $request->query('seat_id'));
 
-        $showtimes = Showtime::with([
-            'movie:id,title',
-            'room:id,cinema_id,name',
-            'room.cinema:id,name',
-        ])
-            ->where(function ($query) use ($selectedShowtimeId) {
-                $query->where('start_time', '>=', now()->startOfDay());
-                if ($selectedShowtimeId) {
-                    $query->orWhere('showtimes.id',$selectedShowtimeId);
-                }
-            })
-            ->orderBy('start_time')
-            ->limit(200)
-            ->get();
+        $movieIds = $this->availableCounterShowtimes()->distinct()->pluck('showtimes.movie_id');
+        $movies = Movie::where('status', 'now_showing')->whereIn('id', $movieIds)
+            ->orderBy('title')->get(['id', 'title']);
 
-        $selectedShowtime = null;
+        $selectedShowtime = $selectedShowtimeId
+            ? $this->availableCounterShowtimes()->with(['movie', 'room.cinema'])->find($selectedShowtimeId)
+            : null;
         $bookedSeatIds    = collect();
         $seats            = collect();
 
-        if ($selectedShowtimeId) {
-            $selectedShowtime = Showtime::with('movie', 'room.cinema')->find($selectedShowtimeId);
-            if ($selectedShowtime) {
-                $bookedSeatIds = Ticket::where('showtime_id', $selectedShowtime->id)
-                    ->whereIn('status', ['pending', 'confirmed', 'used'])
-                    ->pluck('seat_id');
-
-                $seats = Seat::with('room.cinema')
-                    ->where('room_id', $selectedShowtime->room_id)
-                    ->where('status', 1)
-                    ->orderBy('seat_row')
-                    ->orderBy('seat_number')
-                    ->get();
-            }
+        if ($selectedShowtime) {
+            $bookedSeatIds = Ticket::where('showtime_id', $selectedShowtime->id)->pluck('seat_id');
+            $seats = Seat::with('room.cinema')
+                ->where('room_id', $selectedShowtime->room_id)
+                ->where('status', 1)
+                ->orderBy('seat_row')
+                ->orderBy('seat_number')
+                ->get();
         }
 
-        // Mặc định chỉ lấy user vai trò customer để tạo vé cho khách
-        $users = User::where('role', 'customer')->orderBy('name')->limit(500)->get();
+        $selectedCustomer = old('user_id')
+            ? User::whereKey(old('user_id'))->where('role', 'customer')->where('status', 'active')->where('is_active', true)->first(['id', 'name', 'email', 'phone'])
+            : null;
 
         return view('admin.tickets.create', [
-            'showtimes'    => $showtimes,
+            'movies'       => $movies,
             'seats'        => $seats,
-            'users'        => $users,
-            'prefillShowtime' => $selectedShowtimeId,
+            'products'     => FoodItem::where('status', 'available')->orderBy('name')->get(),
+            'selectedCustomer' => $selectedCustomer,
             'prefillSeat'  => $selectedSeatId,
             'selectedShowtime' => $selectedShowtime,
             'bookedSeatIds' => $bookedSeatIds,
+            'saleToken' => old('sale_token', (string) Str::uuid()),
+        ]);
+    }
+
+    private function availableCounterShowtimes()
+    {
+        return Showtime::query()
+            ->where('showtimes.start_time', '>', now())
+            ->where('showtimes.start_time', '<=', $this->counterSaleEndTime())
+            ->where('showtimes.status', 'active')
+            ->whereHas('movie', fn ($query) => $query->where('status', 'now_showing'))
+            ->whereHas('room', fn ($query) => $query->where('status', 'active')
+                ->whereHas('cinema', fn ($cinema) => $cinema->where('status', 'active')));
+    }
+
+    private function counterSaleEndTime(): Carbon
+    {
+        return now()->startOfDay()->addDays(6)->endOfDay();
+    }
+
+    public function showtimeOptions(Request $request)
+    {
+        $data = $request->validate([
+            'stage' => ['required', 'in:cinemas,rooms,dates,showtimes'],
+            'movie_id' => ['required', 'integer', 'exists:movies,id'],
+            'cinema_id' => ['required_if:stage,rooms,dates,showtimes', 'nullable', 'integer', 'exists:cinemas,id'],
+            'room_id' => ['required_if:stage,dates,showtimes', 'nullable', 'integer', 'exists:rooms,id'],
+            'date' => ['required_if:stage,showtimes', 'nullable', 'date_format:Y-m-d'],
+        ]);
+        $query = $this->availableCounterShowtimes()->where('showtimes.movie_id', $data['movie_id']);
+
+        $options = match ($data['stage']) {
+            'cinemas' => $query->join('rooms', 'rooms.id', '=', 'showtimes.room_id')
+                ->join('cinemas', 'cinemas.id', '=', 'rooms.cinema_id')
+                ->distinct()->orderBy('cinemas.name')
+                ->get(['cinemas.id as value', 'cinemas.name as label']),
+            'rooms' => $query->join('rooms', 'rooms.id', '=', 'showtimes.room_id')
+                ->where('rooms.cinema_id', $data['cinema_id'])
+                ->distinct()->orderBy('rooms.name')
+                ->get(['rooms.id as value', 'rooms.name as label']),
+            'dates' => $query->where('showtimes.room_id', $data['room_id'])
+                ->whereHas('room', fn ($room) => $room->where('cinema_id', $data['cinema_id']))
+                ->selectRaw('DATE(showtimes.start_time) as value')->distinct()->orderBy('value')->get()
+                ->map(fn ($row) => ['value' => $row->value, 'label' => Carbon::parse($row->value)->format('d/m/Y')]),
+            'showtimes' => $query->where('showtimes.room_id', $data['room_id'])
+                ->whereHas('room', fn ($room) => $room->where('cinema_id', $data['cinema_id']))
+                ->whereDate('showtimes.start_time', $data['date'])
+                ->orderBy('showtimes.start_time')->get(['showtimes.id', 'showtimes.start_time', 'showtimes.end_time'])
+                ->map(fn ($showtime) => ['value' => $showtime->id,
+                    'label' => $showtime->start_time->format('H:i').($showtime->end_time ? ' – '.$showtime->end_time->format('H:i') : '')]),
+        };
+
+        return response()->json(['options' => $options]);
+    }
+
+    public function memberSearch(Request $request)
+    {
+        $data = $request->validate(['q' => ['nullable', 'string', 'max:100']]);
+        $term = trim($data['q'] ?? '');
+
+        if (mb_strlen($term) < 2) {
+            return response()->json(['members' => []]);
+        }
+
+        $members = User::query()
+            ->where('role', 'customer')
+            ->where('status', 'active')
+            ->where('is_active', true)
+            ->where(function ($query) use ($term) {
+                $query->where('name', 'like', '%'.$term.'%')
+                    ->orWhere('phone', 'like', '%'.$term.'%')
+                    ->orWhere('email', 'like', '%'.$term.'%');
+            })
+            ->orderBy('name')
+            ->limit(8)
+            ->get(['id', 'name', 'email', 'phone']);
+
+        return response()->json(['members' => $members]);
+    }
+
+    public function memberPromotions(Request $request, MembershipService $membership)
+    {
+        $data = $request->validate(['user_id' => ['required', 'integer', 'exists:users,id']]);
+        $customer = User::whereKey($data['user_id'])->where('role', 'customer')
+            ->where('status', 'active')->where('is_active', true)->firstOrFail();
+        $level = $membership->levelFor((int) $customer->points);
+        $promotions = Promotion::available()->eligibleFor($customer)->orderBy('end_date')->get()
+            ->map(fn (Promotion $promotion) => [
+                'code' => $promotion->code,
+                'name' => $promotion->name,
+                'description' => $promotion->description,
+                'discount_label' => $promotion->discount_label,
+                'type' => $promotion->type,
+                'value' => $promotion->value,
+                'end_date' => $promotion->end_date->format('d/m/Y'),
+            ]);
+
+        return response()->json([
+            'promotions' => $promotions,
+            'membership' => [
+                'level' => $level?->name,
+                'discount_percent' => $membership->settings()->is_enabled ? (float) ($level?->discount_percent ?? 0) : 0,
+            ],
         ]);
     }
 
     /**
      * Lưu vé thủ công (confirmed + thanh toán offline).
      */
-    public function store(Request $request)
+    public function store(Request $request, BookingHoldService $holds, MembershipService $membership, PromotionService $promotions)
     {
+        if ($request->input('customer_type') === 'guest') {
+            $request->merge(['user_id' => null, 'promo_code' => null]);
+        }
+        $maxSeats = (int) config('booking_limits.seats_per_order');
+        $maxFoodQuantity = (int) config('booking_limits.quantity_per_food_item');
         $data = $request->validate([
             'showtime_id' => ['required', 'exists:showtimes,id'],
-            'seat_id'     => ['required', 'exists:seats,id'],
-            'user_id'     => ['required', 'exists:users,id'],
-            'price'       => ['nullable', 'numeric', 'min:0'],
+            'seat_id'     => ['nullable', 'exists:seats,id'],
+            'seat_ids'    => ['nullable', 'array', 'min:1', 'max:'.$maxSeats],
+            'seat_ids.*'  => ['integer', 'distinct', 'exists:seats,id'],
+            'customer_type' => ['nullable', 'in:guest,member'],
+            'user_id'     => ['nullable', 'required_if:customer_type,member', 'exists:users,id'],
+            'promo_code'  => ['nullable', 'string', 'max:50'],
+            'items'       => ['nullable', 'array', 'max:100'],
+            'items.*'     => ['nullable', 'integer', 'min:0', 'max:'.$maxFoodQuantity],
+            'sale_token'  => ['nullable', 'uuid'],
         ], [
             'showtime_id.required' => 'Chọn suất chiếu.',
-            'seat_id.required'     => 'Chọn ghế.',
-            'user_id.required'     => 'Chọn khách hàng.',
+            'seat_ids.max' => 'Chỉ được chọn tối đa '.$maxSeats.' ghế cho mỗi giao dịch.',
+            'items.*.max' => 'Mỗi combo hoặc sản phẩm chỉ được chọn tối đa '.$maxFoodQuantity.' phần.',
         ]);
-
-        // Check ghế trống
-        if (!\App\Models\PaymentMethod::where('code', 'cash')->where('is_enabled', true)->exists()) {
+        if (($data['customer_type'] ?? null) === 'guest') {
+            $data['user_id'] = null;
+            $data['promo_code'] = null;
+        }
+        $seatIds = collect($data['seat_ids'] ?? (isset($data['seat_id']) ? [$data['seat_id']] : []))->map(fn ($id) => (int) $id)->unique();
+        $quantities = collect($data['items'] ?? [])->filter(fn ($quantity) => (int) $quantity > 0);
+        if ($seatIds->isEmpty()) throw ValidationException::withMessages(['seat_ids' => 'Chọn ít nhất một ghế.']);
+        if (! PaymentMethod::where('code', 'cash')->where('is_enabled', true)->exists()) {
             return back()->withInput()->with('error', 'Thanh toán tiền mặt tại quầy đang tạm dừng. Vui lòng kiểm tra cấu hình phương thức thanh toán.');
         }
-        $seatBusy = Ticket::where('showtime_id', $data['showtime_id'])
-            ->where('seat_id', $data['seat_id'])
-            ->whereIn('status', ['pending', 'confirmed', 'used'])
-            ->exists();
-        if ($seatBusy) {
-            return back()->withErrors(['seat_id' => 'Ghế đã được đặt cho suất chiếu này.'])->withInput();
-        }
-
-        $showtime = Showtime::with('room')->findOrFail($data['showtime_id']);
-        $seat     = Seat::findOrFail($data['seat_id']);
-
-        // Đảm bảo ghế thuộc đúng phòng của suất chiếu và ghế đang active
-        if ($seat->room_id !== $showtime->room_id || ($seat->status ?? 1) != 1) {
-            return back()->withErrors(['seat_id' => 'Ghế không thuộc phòng của suất chiếu hoặc không khả dụng.'])->withInput();
-        }
-
-        $price = $data['price'] ?? ($showtime->base_price + ($seat->extra_price ?? 0));
-
-        $ticket = Ticket::create([
-            'user_id'     => $data['user_id'],
-            'showtime_id' => $data['showtime_id'],
-            'seat_id'     => $data['seat_id'],
-            'price'       => $price,
-            'status'      => 'confirmed',
-            'booked_at'   => Carbon::now(),
-        ]);
-
-        Payment::create([
-            'ticket_id' => $ticket->id,
-            'amount'    => $price,
-            'method'    => 'cash',
-            'status'    => 'paid',
-            'paid_at'   => Carbon::now(),
-        ]);
-
-        // Tạo QR code cho vé (nếu chưa có)
-        $this->generateQrForTicket($ticket);
-
-        return redirect()->route('admin.tickets.index')->with('success', 'Đã tạo vé thủ công.');
+        $data['sale_token'] ??= (string) Str::uuid();
+        $code = 'POS-'.$data['sale_token'];
+        $firstId = DB::transaction(function () use ($data, $seatIds, $quantities, $code, $holds, $membership, $promotions, $request) {
+            $existing = Invoice::where('invoice_code', $code)->first();
+            if ($existing) return $existing->ticket_id;
+            $showtime = Showtime::with(['movie', 'room.cinema'])->whereKey($data['showtime_id'])->lockForUpdate()->firstOrFail();
+            if ($showtime->status !== 'active' || $showtime->start_time <= now() || $showtime->start_time > $this->counterSaleEndTime()
+                || $showtime->movie?->status !== 'now_showing'
+                || $showtime->room?->status !== 'active' || $showtime->room?->cinema?->status !== 'active') {
+                throw ValidationException::withMessages(['showtime_id' => 'Suất chiếu không còn khả dụng.']);
+            }
+            $seats = Seat::whereIn('id', $seatIds)->where('room_id', $showtime->room_id)->where('status', 1)->orderBy('id')->get();
+            if ($seats->count() !== $seatIds->count()) throw ValidationException::withMessages(['seat_ids' => 'Có ghế không khả dụng hoặc khác phòng.']);
+            $codes = $seats->map(fn ($s) => $s->seat_row.$s->seat_number);
+            if ($holds->heldByOther($showtime->id, $codes)->isNotEmpty()) throw ValidationException::withMessages(['seat_ids' => 'Ghế đang được khách khác giữ.']);
+            if (Ticket::where('showtime_id', $showtime->id)->whereIn('seat_id', $seatIds)->exists()) {
+                throw ValidationException::withMessages(['seat_ids' => 'Ghế đã có vé cho suất chiếu này.']);
+            }
+            $customer = isset($data['user_id']) ? User::whereKey($data['user_id'])->where('role', 'customer')->where('status', 'active')->where('is_active', true)->first() : null;
+            if (isset($data['user_id']) && ! $customer) throw ValidationException::withMessages(['user_id' => 'Chỉ có thể chọn tài khoản khách hàng đang hoạt động.']);
+            if (! empty($data['promo_code']) && ! $customer) throw ValidationException::withMessages(['promo_code' => 'Chọn thành viên trước khi áp dụng khuyến mãi.']);
+            $promotion = ! empty($data['promo_code']) ? $promotions->findAvailableForUser($data['promo_code'], $customer, true) : null;
+            $products = $quantities->isNotEmpty()
+                ? FoodItem::whereIn('id', $quantities->keys())->where('status', 'available')->lockForUpdate()->get()->keyBy('id')
+                : collect();
+            if ($products->count() !== $quantities->count()) throw ValidationException::withMessages(['items' => 'Có sản phẩm đã ngừng bán. Vui lòng tải lại trang.']);
+            $foodTotal = $quantities->reduce(fn ($sum, $quantity, $id) => $sum + (float) $products[$id]->price * (int) $quantity, 0);
+            $gross = $seats->sum(fn ($seat) => (float) $showtime->base_price + (float) $seat->extra_price);
+            $membershipDiscount = $customer && ! $promotion ? $membership->discount($customer, $gross) : 0;
+            $promotionDiscount = $promotion?->discountFor($gross + $foodTotal) ?? 0;
+            $ticketDiscount = $promotion
+                ? min($gross, round($promotionDiscount * $gross / max(1, $gross + $foodTotal), 2))
+                : $membershipDiscount;
+            $foodDiscount = $promotion ? min($foodTotal, $promotionDiscount - $ticketDiscount) : 0;
+            $net = max(0, $gross - $ticketDiscount);
+            $foodNet = max(0, $foodTotal - $foodDiscount);
+            $tickets = collect();
+            $remaining = $net;
+            foreach ($seats as $index => $seat) {
+                $amount = $index === $seats->count() - 1 ? $remaining : round($net * (((float) $showtime->base_price + (float) $seat->extra_price) / max(1, $gross)), 2);
+                $remaining -= $amount;
+                $ticket = Ticket::create(['user_id' => $customer?->id, 'sold_by' => $request->user()->id, 'sales_channel' => 'counter',
+                    'showtime_id' => $showtime->id, 'seat_id' => $seat->id, 'price' => $amount, 'status' => 'confirmed',
+                    'qr_code' => $code, 'booked_at' => now()]);
+                Payment::create(['ticket_id' => $ticket->id, 'amount' => $amount, 'method' => 'cash', 'status' => 'paid', 'paid_at' => now()]);
+                $tickets->push($ticket);
+            }
+            if ($quantities->isNotEmpty()) {
+                $order = FoodOrder::create(['user_id' => $customer?->id, 'ticket_id' => $tickets->first()->id,
+                    'sold_by' => $request->user()->id, 'sale_token' => $data['sale_token'], 'total_price' => $foodNet, 'status' => 'completed']);
+                $order->update(['pickup_code' => 'F'.$order->id]);
+                foreach ($quantities as $id => $quantity) {
+                    $order->items()->create(['food_item_id' => $id, 'quantity' => (int) $quantity, 'price' => $products[$id]->price]);
+                }
+                Payment::create(['food_order_id' => $order->id, 'amount' => $foodNet,
+                    'method' => 'cash', 'status' => 'paid', 'paid_at' => now()]);
+            }
+            $invoice = Invoice::create(['user_id' => $customer?->id, 'ticket_id' => $tickets->first()->id,
+                'promotion_id' => $promotion?->id, 'total_amount' => $net + $foodNet,
+                'invoice_code' => $code, 'membership_level_name' => $customer ? $membership->levelFor((int) $customer->points)?->name : null,
+                'membership_discount' => $membershipDiscount]);
+            if ($promotion) $promotions->consume($promotion);
+            if ($customer) $membership->award($invoice);
+            return $tickets->first()->id;
+        });
+        return redirect()->route('admin.tickets.show', $firstId)->with('success',
+            $quantities->isNotEmpty() ? 'Đã thu tiền, tạo vé và đơn bắp nước tại quầy.' : 'Đã thu tiền và tạo vé tại quầy.');
     }
 
     /**
      * Chi tiết vé.
      */
-    public function show(Ticket $ticket)
+    public function show(Ticket $ticket, TicketExpiryService $expiry)
     {
+        $expiry->expireOverdue();
+        $ticket->refresh();
         $ticket->load([
             'showtime.movie',
             'showtime.room.cinema',
             'seat',
             'user',
+            'seller',
             'payment',
+            'invoice.promotion',
             'foodOrders.items.foodItem',
         ]);
 
         // Bảo đảm vé luôn có QR code (chuỗi) đồng bộ với FE
         $this->generateQrForTicket($ticket);
+        $bookingTickets = Ticket::with(['seat', 'payment'])
+            ->where('showtime_id', $ticket->showtime_id)
+            ->where('qr_code', $ticket->qr_code)
+            ->orderBy('id')
+            ->get();
+        $bookingFoodOrders = FoodOrder::with(['items.foodItem', 'payment', 'ticket.payment'])
+            ->whereIn('ticket_id', $bookingTickets->pluck('id'))
+            ->orderBy('id')
+            ->get();
+        $bookingInvoice = Invoice::with('promotion')
+            ->whereIn('ticket_id', $bookingTickets->pluck('id'))
+            ->first();
 
         // Tạo QR inline (data-uri) từ qr_code hiện tại
         $qrText = $ticket->qr_code ?: ('TICKET-' . $ticket->id);
@@ -251,33 +408,45 @@ class TicketController extends Controller
             'ticket' => $ticket,
             'qrDataUri' => $qrDataUri,
             'qrText' => $qrText,
+            'bookingTickets' => $bookingTickets,
+            'bookingFoodOrders' => $bookingFoodOrders,
+            'bookingInvoice' => $bookingInvoice,
         ]);
     }
 
-    /**
-     * Cập nhật trạng thái used/cancelled.
-     */
-    public function updateStatus(Request $request, Ticket $ticket)
+    public function checkinBooking(Ticket $ticket, TicketExpiryService $expiry)
     {
+        $expiry->expireOverdue();
+        $this->generateQrForTicket($ticket);
+
+        $updated = Ticket::query()
+            ->where('showtime_id', $ticket->showtime_id)
+            ->where('qr_code', $ticket->qr_code)
+            ->where('status', 'confirmed')
+            ->whereHas('payment', fn ($query) => $query->where('status', 'paid'))
+            ->whereHas('showtime', fn ($query) => $query->where('end_time', '>', now()))
+            ->update(['status' => 'used']);
+
+        return $updated
+            ? back()->with('success', "Đã check-in {$updated} ghế trong lượt đặt.")
+            : back()->withErrors(['status' => 'Lượt đặt không còn ghế đã thanh toán nào chờ check-in.']);
+    }
+
+    /** Hủy vé riêng lẻ; check-in chỉ thực hiện theo lượt đặt. */
+    public function updateStatus(Request $request, Ticket $ticket, TicketExpiryService $expiry)
+    {
+        $expiry->expireOverdue($ticket->id);
+        $ticket->refresh();
         $data = $request->validate([
-            'status' => 'required|in:used,cancelled',
+            'status' => 'required|in:cancelled',
         ]);
 
         if ($ticket->status === 'used') {
             return back()->withErrors(['status' => 'Vé đã check-in, không thể đổi trạng thái.']);
         }
-
-        if ($data['status'] === 'used') {
-            // Conditional update also prevents two simultaneous check-ins succeeding.
-            $updated = Ticket::whereKey($ticket->id)->where('status', 'confirmed')
-                ->whereHas('payment', fn ($query) => $query->where('status', 'paid'))
-                ->update(['status' => 'used']);
-
-            if (!$updated) {
-                return back()->withErrors(['status' => 'Chỉ vé đã xác nhận và thanh toán thành công mới được check-in.']);
-            }
-
-            return back()->with('success', 'Đã check-in vé thành công.');
+        if ($ticket->status === 'cancelled') {
+            return back()->withErrors(['status' => $ticket->cancellation_reason === Ticket::EXPIRED_REASON
+                ? 'Vé đã quá hạn và được chuyển vào mục đã hủy.' : 'Vé đã hủy, không thể đổi trạng thái.']);
         }
 
         // Huỷ vé: nếu đã thanh toán thì hoàn tiền (mock)
@@ -290,7 +459,7 @@ class TicketController extends Controller
             }
         }
 
-        $ticket->update(['status' => $data['status']]);
+        $ticket->update(['status' => $data['status'], 'cancellation_reason' => null]);
 
         return back()->with('success', 'Đã cập nhật trạng thái vé.');
     }

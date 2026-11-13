@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @include('shared.page-assets')
-    <title>Phim | TD Cinema</title>
+    <title>{{ $status === 'top_rated' ? 'Phim hay tháng' : 'Phim' }} | TD Cinema</title>
     <link rel="stylesheet" href="{{ asset('assets/css/frontend/movies.css') }}?v={{ filemtime(public_path('assets/css/frontend/movies.css')) }}">
     @include('frontend.partials.header-assets')
 </head>
@@ -46,11 +46,15 @@
                 <a href="{{ route('cinemas.index') }}#cinema-list">Đổi rạp</a>
             </section>
         @endif
+        @if($status === 'top_rated')
+        <h1 class="top-rated-heading">Phim hay tháng</h1>
+        @else
         <div class="nav-tabs">
             <a href="{{ route('movies.index', array_filter(['status' => 'now_showing', 'cinema_id' => $selectedCinema?->id])) }}" class="{{ $status==='now_showing' ? 'active' : '' }}">PHIM ĐANG CHIẾU</a>
             <a href="{{ route('movies.index', array_filter(['status' => 'upcoming', 'cinema_id' => $selectedCinema?->id])) }}" class="{{ $status==='upcoming' ? 'active' : '' }}"> PHIM SẮP CHIẾU</a>
             <a href="{{ route('movies.index', array_filter(['status' => 'imax', 'cinema_id' => $selectedCinema?->id])) }}" class="{{ $status==='imax' ? 'active' : '' }}">PHIM IMAX</a>
         </div>
+        @endif
 
         <div class="grid">
             @forelse($movies as $movie)
@@ -75,12 +79,16 @@
                     <div class="card-info">
                         <div class="title">{{ $movie->title }}</div>
                         <div class="genre">{{ $movie->genre ?: 'Đang cập nhật' }}</div>
+                        @if($status === 'top_rated')
+                        <span class="top-rated-score">★ {{ number_format((float) $movie->rating_avg, 1) }}</span>
+                        @else
                         <span class="status-badge
                             @if($status === 'imax') badge-imax @elseif($movie->status === 'now_showing') badge-now @else badge-upcoming @endif">
                             @if($status === 'imax') IMAX
                             @elseif($movie->status === 'now_showing') Đang chiếu
                             @else Sắp chiếu @endif
                         </span>
+                        @endif
                     </div>
                 </div>
             @empty

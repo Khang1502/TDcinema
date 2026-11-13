@@ -52,6 +52,9 @@
                     <div class="item"><span class="label">Ngày</span><span class="value">{{ \Carbon\Carbon::parse($showtime->start_time)->format('d/m/Y') }}</span></div>
                     <div class="item"><span class="label">Suất chiếu</span><span class="value">{{ \Carbon\Carbon::parse($showtime->start_time)->format('H:i') }}</span></div>
                     <div class="item"><span class="label">Ghế</span><span class="value">{{ $selectedSeats->implode(', ') ?: 'N/A' }}</span></div>
+                    @if(!empty($success) && !empty($foodPickupCode))
+                        <div class="item"><span class="label">Mã nhận bắp nước</span><span class="value">{{ $foodPickupCode }}</span></div>
+                    @endif
                 </div>
 
                 <div class="divider"></div>

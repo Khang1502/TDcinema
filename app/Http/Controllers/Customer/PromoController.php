@@ -25,10 +25,23 @@ class PromoController extends Controller
         return view('frontend.promotions', compact('promotions', 'counts', 'filter'));
     }
 
-    public function select(Promotion $promotion, PromotionService $promotions): RedirectResponse
+    public function select(Request $request, Promotion $promotion, PromotionService $promotions): RedirectResponse|JsonResponse
     {
         $promotion = $promotions->findAvailable($promotion->code);
         session()->put('promotion.preferred_code', $promotion->code);
+
+        if (! auth()->check()) {
+            session()->put('url.intended', route('movies.index'));
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'requires_login' => true,
+                    'message' => 'Hãy đăng nhập để áp dụng ưu đãi này.',
+                ]);
+            }
+
+            return redirect()->route('login')->with('status', 'Hãy đăng nhập để áp dụng ưu đãi này.');
+        }
 
         return redirect()->route('movies.index')->with('success', 'Đã chọn mã '.$promotion->code.'. Mã sẽ được áp dụng ở bước thanh toán.');
     }

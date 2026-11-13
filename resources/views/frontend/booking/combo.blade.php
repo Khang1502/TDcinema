@@ -25,7 +25,7 @@
       data-seat-param="{{ $selectedSeats->implode(',') }}"
       data-payment-url="{{ route('booking.payment', $showtime) }}"
       data-currency-suffix=" đ"
-      data-max-combo-qty="10">
+      data-max-combo-qty="{{ config('booking_limits.quantity_per_food_item') }}">
     <div class="topbar">
         <div class="topbar-inner">
             <a href="{{ route('home') }}" class="topbar-logo">
@@ -47,7 +47,7 @@
 
         <div class="layout">
             <div class="card">
-                <div class="list-title">Chọn Combo / Sản phẩm</div>
+                <div class="list-title">Chọn Combo / Sản phẩm · tối đa {{ config('booking_limits.quantity_per_food_item') }} phần mỗi loại</div>
                 @foreach($combos as $combo)
                     <div class="combo-item" data-id="{{ $combo->id }}" data-price="{{ $combo->price }}">
                         <div class="combo-thumb">

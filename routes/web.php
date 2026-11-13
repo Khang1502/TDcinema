@@ -99,6 +99,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::prefix('payment-methods')->name('payment-methods.')->middleware('admin.permission:payment-methods.manage')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'index'])->name('index');
+            Route::get('create', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'store'])->name('store');
             Route::get('{paymentMethod}/edit', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'edit'])->whereNumber('paymentMethod')->name('edit');
             Route::put('{paymentMethod}', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'update'])->whereNumber('paymentMethod')->name('update');
             Route::patch('{paymentMethod}/visibility', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'visibility'])->whereNumber('paymentMethod')->name('visibility');
@@ -118,6 +120,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('admin.permission:reports.view')->name('export');
 
         Route::middleware('admin.permission:movies.manage')->group(function () {
+            Route::get('monthly-movies', [\App\Http\Controllers\Admin\MonthlyMovieController::class, 'index'])->name('monthly-movies.index');
+            Route::put('monthly-movies/settings', [\App\Http\Controllers\Admin\MonthlyMovieController::class, 'updateSettings'])->name('monthly-movies.settings');
+            Route::patch('monthly-movies/{movie}', [\App\Http\Controllers\Admin\MonthlyMovieController::class, 'update'])->name('monthly-movies.update');
             Route::get('movies/archive', [\App\Http\Controllers\Admin\MovieArchiveController::class, 'index'])->name('movies.archive');
             Route::get('movies/archive/{movie}', [\App\Http\Controllers\Admin\MovieArchiveController::class, 'show'])->name('movies.archive.show');
             Route::post('movies/{movie}/archive', [\App\Http\Controllers\Admin\MovieArchiveController::class, 'store'])->name('movies.archive.store');
@@ -196,9 +201,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Quản lý vé
         Route::middleware('admin.permission:tickets.manage')->group(function () {
-            Route::post('tickets/bulk-checkin', [AdminTicketController::class, 'bulkCheckin'])->name('tickets.bulk-checkin');
+            Route::get('tickets/member-search', [AdminTicketController::class, 'memberSearch'])->name('tickets.member-search');
+            Route::get('tickets/member-promotions', [AdminTicketController::class, 'memberPromotions'])->name('tickets.member-promotions');
+            Route::get('tickets/showtime-options', [AdminTicketController::class, 'showtimeOptions'])->name('tickets.showtime-options');
             Route::post('tickets/{ticket}/status', [AdminTicketController::class, 'updateStatus'])->name('tickets.status');
+            Route::post('tickets/{ticket}/booking-checkin', [AdminTicketController::class, 'checkinBooking'])->name('tickets.booking-checkin');
             Route::resource('tickets', AdminTicketController::class)->except(['edit', 'update', 'destroy']);
+        });
+
+        Route::middleware('admin.permission:food-sales.manage')->prefix('food-orders')->name('food-orders.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\CounterFoodOrderController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\CounterFoodOrderController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\CounterFoodOrderController::class, 'store'])->name('store');
+            Route::get('/{foodOrder}', [\App\Http\Controllers\Admin\CounterFoodOrderController::class, 'show'])->whereNumber('foodOrder')->name('show');
+            Route::post('/{foodOrder}/fulfill', [\App\Http\Controllers\Admin\CounterFoodOrderController::class, 'fulfill'])->whereNumber('foodOrder')->name('fulfill');
+            Route::post('/{foodOrder}/items/{item}/fulfill', [\App\Http\Controllers\Admin\CounterFoodOrderController::class, 'fulfillItem'])
+                ->whereNumber('foodOrder')->whereNumber('item')->name('items.fulfill');
         });
 
         // Quản lý người dùng

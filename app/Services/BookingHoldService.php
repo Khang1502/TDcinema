@@ -155,6 +155,7 @@ class BookingHoldService
             'booking.seats',
             'booking.showtime_id',
             'booking.combo_total',
+            'booking.combo_items',
             'booking.promo_code',
             'booking.pending_payment',
         ]);

@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\{Cinema, Movie, Payment, PaymentMethod, Room, Seat, Showtime, Ticket, User};
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminPaymentMethodTest extends TestCase
@@ -40,8 +42,48 @@ class AdminPaymentMethodTest extends TestCase
         $this->assertDatabaseCount('payment_methods', 8);
         $this->assertSame(['onepay','shopeepay','momo','zalopay','payoo','fundiin'], PaymentMethod::onlineCodes());
         $this->actingAs(User::factory()->create(['role'=>'admin']))->get(route('admin.payment-methods.index'))->assertOk()
-            ->assertSee('Thanh toán trực tuyến')->assertSee('Thanh toán tại quầy')->assertSee('Chỉnh sửa MoMo');
+            ->assertSee('Thanh toán trực tuyến')->assertSee('Thanh toán tại quầy')->assertSee('Chỉnh sửa MoMo')
+            ->assertSee('Thêm phương thức')->assertSee(asset('assets/images/payment-methods/momo.svg'));
+        $this->get(route('admin.payment-methods.create'))->assertOk()->assertSee('Mã phương thức');
         $this->get(route('admin.payment-methods.edit', $this->method('momo')))->assertOk()->assertSee('Mã phương thức');
+    }
+
+    public function test_admin_can_add_disabled_demo_method_with_image_then_enable_it_for_checkout(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['role'=>'admin']);
+        $this->actingAs($admin)->post(route('admin.payment-methods.store'), [
+            'code'=>'new_wallet', 'name'=>'Ví thử nghiệm', 'description'=>'Thanh toán bằng ví thử nghiệm',
+            'instructions'=>'Xác nhận tại trang thanh toán', 'badge'=>'Mới', 'sort_order'=>5,
+            'logo'=>UploadedFile::fake()->image('wallet.png', 80, 80),
+        ])->assertRedirectToRoute('admin.payment-methods.index')->assertSessionHas('success');
+
+        $method = $this->method('new_wallet');
+        $this->assertFalse($method->is_enabled);
+        $this->assertTrue($method->is_online);
+        $this->assertTrue($method->isDemo());
+        Storage::disk('public')->assertExists($method->logo_path);
+        $this->assertNotContains('new_wallet', PaymentMethod::onlineCodes());
+        $this->get(route('admin.payment-methods.index'))->assertOk()->assertSee($method->logoUrl());
+
+        $this->patch(route('admin.payment-methods.visibility', $method), ['is_enabled'=>true])->assertRedirect();
+        $this->assertContains('new_wallet', PaymentMethod::onlineCodes());
+        $show = $this->booking();
+        $this->get(route('booking.payment', $show))->assertOk()
+            ->assertSee('Ví thử nghiệm')->assertSee('Thanh toán bằng ví thử nghiệm')->assertSee($method->logoUrl());
+        $result = $this->post(route('booking.payment.process', $show), ['payment_method'=>'new_wallet'])->assertRedirect();
+        $this->get($result->headers->get('Location'))->assertOk()->assertViewHas('success', true);
+        $this->assertSame('new_wallet', Payment::latest('id')->first()->method);
+    }
+
+    public function test_new_method_rejects_duplicate_or_invalid_code_and_invalid_image(): void
+    {
+        $this->actingAs(User::factory()->create(['role'=>'admin']))
+            ->postJson(route('admin.payment-methods.store'), [
+                'code'=>'momo', 'name'=>'Ví khác', 'sort_order'=>-1,
+                'logo'=>UploadedFile::fake()->create('notes.txt', 1, 'text/plain'),
+            ])->assertUnprocessable()->assertJsonValidationErrors(['code','sort_order','logo']);
+        $this->assertDatabaseCount('payment_methods', 8);
     }
 
     public function test_admin_edits_are_used_by_checkout_with_the_selected_display_order(): void
@@ -132,11 +174,12 @@ class AdminPaymentMethodTest extends TestCase
     public function test_read_permission_does_not_grant_settings_access_and_granular_settings_permission_works(): void
     {
         $method = $this->method();
-        $paths = [route('admin.payment-methods.index'), route('admin.payment-methods.edit', $method)];
+        $paths = [route('admin.payment-methods.index'), route('admin.payment-methods.create'), route('admin.payment-methods.edit', $method)];
         $this->get($paths[0])->assertRedirectToRoute('login');
         foreach ([['role'=>'customer'], ['role'=>'staff'], ['role'=>'staff', 'admin_permissions'=>['dashboard.view','payments.manage']]] as $attributes) {
             $this->actingAs(User::factory()->create($attributes));
             foreach ($paths as $path) $this->get($path)->assertForbidden();
+            $this->post(route('admin.payment-methods.store'), ['code'=>'new_wallet','name'=>'Ví mới','sort_order'=>10])->assertForbidden();
             $this->put(route('admin.payment-methods.update', $method), $this->form($method))->assertForbidden();
             $this->patch(route('admin.payment-methods.visibility', $method), ['is_enabled'=>false])->assertForbidden();
         }

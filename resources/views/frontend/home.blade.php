@@ -248,16 +248,12 @@
                     @foreach($upcoming as $movie)
                         @php
                             $age = strtoupper($movie->age_rating ?? 'T13');
-                            $ratingScore = $movie->rating_avg ?? null;
                         @endphp
                         <div class="movie-card">
                             <div class="movie-poster">
                                 <a class="poster-link" href="{{ route('movies.show', $movie) }}" title="{{ $movie->title }}">
                                     <img src="{{ $posterUrl($movie) }}" alt="{{ $movie->title }}" loading="lazy" decoding="async">
                                 </a>
-                                @if($ratingScore)
-                                    <div class="rating-badge">{{ number_format($ratingScore,1) }}</div>
-                                @endif
                                 <div class="age-badge">{{ $age }}</div>
                                 <div class="overlay">
                                     <button class="btn btn-buy" data-movie-id="{{ $movie->id }}" data-movie-title="{{ $movie->title }}" data-detail="{{ route('movies.show', $movie) }}">Mua vé</button>
@@ -325,7 +321,6 @@
                     <div class="offer-carousel-footer" data-offer-controls hidden>
                         <div class="offer-carousel-nav">
                             <span class="offer-visible-count" data-offer-count></span>
-                            <button type="button" class="offer-scroll-button offer-autoplay-button" data-offer-toggle aria-label="Tạm dừng tự chạy" hidden><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5v10M13 5v10" /></svg></button>
                             <button type="button" class="offer-scroll-button" data-offer-prev aria-label="Khuyến mãi trước" aria-controls="home-offers-track"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12 5-5 5 5 5" /></svg></button>
                             <button type="button" class="offer-scroll-button" data-offer-next aria-label="Khuyến mãi tiếp theo" aria-controls="home-offers-track"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m8 5 5 5-5 5" /></svg></button>
                         </div>

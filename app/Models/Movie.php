@@ -31,6 +31,7 @@ class Movie extends Model
         'source_url',
         'rating_avg',
         'review_count',
+        'is_monthly_featured',
     ];
 
     protected static function booted(): void
@@ -67,6 +68,7 @@ class Movie extends Model
     {
         return [
             'is_imax' => 'boolean',
+            'is_monthly_featured' => 'boolean',
             'release_date' => 'date',
         ];
     }

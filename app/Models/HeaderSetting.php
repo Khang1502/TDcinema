@@ -16,12 +16,11 @@ class HeaderSetting extends Model
             'shop'=>['label'=>'Star Shop', 'url'=>'/star-shop', 'is_visible'=>true, 'sort_order'=>1, 'children'=>[
                 ['label'=>'Combo bắp nước', 'url'=>'/star-shop#products', 'description'=>'Chọn món ăn kèm cho buổi xem phim'],
                 ['label'=>'Quà tặng điện ảnh', 'url'=>'/star-shop#products', 'description'=>'Xem sản phẩm và bộ sưu tập nổi bật'],
-                ['label'=>'Hướng dẫn mua combo', 'url'=>'/star-shop', 'description'=>'Đặt cùng vé và nhận nhanh tại quầy'],
             ]],
             'corner'=>['label'=>'Góc Điện Ảnh', 'url'=>'/#cinema-corner', 'is_visible'=>true, 'sort_order'=>2, 'children'=>[
                 ['label'=>'Bình luận phim', 'url'=>'/goc-dien-anh/review', 'description'=>'Góc nhìn và cảm nhận về phim mới'],
                 ['label'=>'Blog điện ảnh', 'url'=>'/goc-dien-anh/blog', 'description'=>'Tin tức, hậu trường và câu chuyện phim'],
-                ['label'=>'Phim hay tháng', 'url'=>'/movies?status=now_showing', 'description'=>'Danh sách phim nổi bật đang chiếu'],
+                ['label'=>'Phim hay tháng', 'url'=>'/movies?status=top_rated', 'description'=>'Phim được xếp theo điểm đánh giá'],
             ]],
             'events'=>['label'=>'Sự kiện', 'url'=>'/khuyen-mai', 'is_visible'=>true, 'sort_order'=>3, 'children'=>[
                 ['label'=>'Khuyến mãi đang diễn ra', 'url'=>'/khuyen-mai', 'description'=>'Chọn mã ưu đãi để dùng khi thanh toán'],

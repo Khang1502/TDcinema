@@ -60,11 +60,12 @@
       ticketTotalEl.textContent = fmt(ticketTotal);
     }
     if (payLink && paymentUrl) {
-      let query = '';
-      if (comboTotal > 0) {
-        query = `?combo_total=${comboTotal}`;
-      }
-      payLink.href = paymentUrl + query;
+      const selected = new URLSearchParams();
+      combos.forEach((combo) => {
+        const quantity = Number(combo.querySelector('.qty-value')?.textContent || 0);
+        if (quantity > 0) selected.set(`items[${combo.dataset.id}]`, String(quantity));
+      });
+      payLink.href = paymentUrl + '?' + (selected.size ? selected.toString() : 'combo_total=0');
     }
   };
 

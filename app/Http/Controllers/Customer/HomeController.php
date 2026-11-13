@@ -13,6 +13,8 @@ use App\Models\PromotionDisplaySetting;
 use App\Models\Ticket;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use App\Services\TicketExpiryService;
 
 class HomeController extends Controller
 {
@@ -67,19 +69,41 @@ class HomeController extends Controller
     /**
      * Lịch sử vé của khách (role customer).
      */
-    public function ticketHistory()
+    public function ticketHistory(TicketExpiryService $expiry)
     {
         $userId = Auth::id();
-        $tickets = Ticket::with(['showtime.movie', 'showtime.room.cinema', 'seat', 'payment'])
+        $expiry->expireOverdue(userId: $userId);
+        $bookings = Ticket::query()
             ->where('user_id', $userId)
-            ->orderByDesc('created_at')
+            ->selectRaw('MIN(id) as first_ticket_id, qr_code, showtime_id, MAX(created_at) as latest_at')
+            ->groupBy('qr_code', 'showtime_id')
+            ->groupByRaw("CASE WHEN qr_code IS NULL OR qr_code = '' THEN id ELSE 0 END")
+            ->orderByDesc('latest_at')
+            ->orderByDesc('first_ticket_id')
             ->paginate(5);
+
+        $bookings->getCollection()->transform(function ($booking) use ($userId) {
+            $tickets = Ticket::with(['showtime.movie', 'showtime.room.cinema', 'seat', 'payment', 'foodOrders.items'])
+                ->where('user_id', $userId)
+                ->where('showtime_id', $booking->showtime_id)
+                ->when($booking->qr_code, fn ($query) => $query->where('qr_code', $booking->qr_code),
+                    fn ($query) => $query->whereKey($booking->first_ticket_id))
+                ->orderBy('id')
+                ->get();
+            $booking->setRelation('tickets', $tickets);
+            $code = $booking->qr_code ?: 'TICKET-'.$booking->first_ticket_id;
+            $booking->checkin_code = $code;
+            $booking->qr_data_uri = 'data:image/svg+xml;base64,'.base64_encode(
+                QrCode::format('svg')->encoding('UTF-8')->size(220)->margin(1)->generate($code)
+            );
+            return $booking;
+        });
 
         // Tổng chi tiêu (payment paid của user)
         $totalSpent = Payment::where('status', 'paid')
             ->whereHas('ticket', fn ($q) => $q->where('user_id', $userId))
             ->sum('amount');
 
-        return view('customer.tickets.index', compact('tickets', 'totalSpent'));
+        return view('customer.tickets.index', compact('bookings', 'totalSpent'));
     }
 }
